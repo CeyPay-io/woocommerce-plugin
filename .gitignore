@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+*.zip
+
+# Virtual environments
+.venv/
+__pycache__/
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.log
+tmpclaude*
+.mint-temp/
+.playwright-mcp/
+
+# Local dev files (optional - keep in repo for devs)
+mock_server/orders.json
+
+# Local Claude settings
+.claude/
+.mcp.json
+
+assets/
+scripts/

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "CeyPay WordPress Plugin",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#1C6EF5",
+    "light": "#33CFFF",
+    "dark": "#0099CC",
+    "anchors": {
+      "from": "#1C6EF5",
+      "to": "#4ADE80"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:hello@ceypay.io"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://ceypay.io"
+  },
+  "tabs": [
+    {
+      "name": "Documentation",
+      "url": "/"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/ceylabs"
+    },
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://discord.gg/ceypay"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "wordpress/introduction",
+        "wordpress/quickstart",
+        "wordpress/configuration"
+      ]
+    },
+    {
+      "group": "Integration",
+      "pages": [
+        "wordpress/webhooks",
+        "wordpress/testing"
+      ]
+    },
+    {
+      "group": "Resources",
+      "pages": [
+        "wordpress/troubleshooting"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://x.com/ceypayintern",
+    "github": "https://github.com/ceylabs",
+    "website": "https://ceypay.io"
+  },
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true
+  },
+  "seo": {
+    "indexHiddenPages": false
+  },
+  "analytics": {
+    "ga4": {
+      "measurementId": ""
+    }
+  }
+}
