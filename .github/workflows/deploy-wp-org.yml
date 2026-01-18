@@ -1,0 +1,110 @@
+name: Deploy to WordPress.org
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (do not actually deploy)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  PLUGIN_SLUG: ceypay-payment-gateway
+  SVN_URL: https://plugins.svn.wordpress.org/ceypay-payment-gateway
+
+jobs:
+  deploy:
+    # Only deploy stable releases (not RC or dev)
+    if: ${{ !contains(github.ref, 'rc') && !contains(github.ref, 'dev') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Get Version from Plugin File
+        id: version
+        run: |
+          VERSION=$(grep -oP "Version:\s*\K[0-9.]+" ${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+
+      - name: Prepare Plugin for WordPress.org
+        run: |
+          mkdir -p wporg-build
+          cp -r ${{ env.PLUGIN_SLUG }}/* wporg-build/
+          echo "Files prepared for WordPress.org"
+
+      - name: Install SVN
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
+      - name: SVN Checkout
+        run: |
+          svn checkout --depth=immediates "${{ env.SVN_URL }}" svn-repo
+          cd svn-repo
+          svn update --set-depth=infinity trunk
+          svn update --set-depth=infinity assets
+          svn update --set-depth=immediates tags
+
+      - name: Prepare SVN Trunk
+        run: |
+          rm -rf svn-repo/trunk/*
+          cp -r wporg-build/* svn-repo/trunk/
+
+      - name: Prepare SVN Assets
+        run: |
+          if [ -d "wp-assets" ]; then
+            cp -r wp-assets/* svn-repo/assets/
+          fi
+
+      - name: Create SVN Tag
+        run: |
+          cd svn-repo
+          VERSION="${{ steps.version.outputs.version }}"
+          if svn ls "tags/${VERSION}" 2>/dev/null; then
+            echo "Tag ${VERSION} already exists"
+          else
+            svn copy trunk "tags/${VERSION}"
+          fi
+
+      - name: SVN Add/Remove Files
+        run: |
+          cd svn-repo
+          svn add --force trunk/* --auto-props --parents --depth infinity -q 2>/dev/null || true
+          svn add --force assets/* --auto-props --parents --depth infinity -q 2>/dev/null || true
+          svn add --force tags/${{ steps.version.outputs.version }} --auto-props --parents --depth infinity -q 2>/dev/null || true
+          svn status | grep '^!' | awk '{print $2}' | xargs -r svn delete
+          svn status
+
+      - name: SVN Commit
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        run: |
+          cd svn-repo
+          if svn status | grep -q '^[ACDMR]'; then
+            svn commit \
+              --username "$SVN_USERNAME" \
+              --password "$SVN_PASSWORD" \
+              --no-auth-cache \
+              --non-interactive \
+              -m "Release version ${{ steps.version.outputs.version }}"
+            echo "✅ Deployed v${{ steps.version.outputs.version }} to WordPress.org!"
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Dry Run Summary
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "============================================"
+          echo "DRY RUN - No changes committed"
+          echo "============================================"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          ls -la svn-repo/trunk/

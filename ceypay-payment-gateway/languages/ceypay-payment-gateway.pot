@@ -1,0 +1,144 @@
+# Copyright (C) 2026 CeyPay
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: CeyPay Payment Gateway 1.1.2\n"
+"Report-Msgid-Bugs-To: https://ceypay.io/\n"
+"POT-Creation-Date: 2024-12-27T00:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ceypay-payment-gateway.php:125
+msgid "Action Needed: Complete CeyPay Setup"
+msgstr ""
+
+#: ceypay-payment-gateway.php:127
+msgid "Your CeyPay payment gateway is almost ready! To start accepting crypto payments, you must configure your <strong>Merchant ID</strong>."
+msgstr ""
+
+#: ceypay-payment-gateway.php:130
+msgid "Complete Setup Now"
+msgstr ""
+
+#: ceypay-payment-gateway.php:173
+msgid "Action Needed"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:37
+msgid "CeyPay"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:38
+msgid "Pay securely with CeyPay using digital currency balance on your favorite centralized exchange."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:268
+msgid "Enable/Disable"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:270
+msgid "Enable CeyPay Payment"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:274
+msgid "Test Mode"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:276
+msgid "Enable Test Mode"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:278
+msgid "Place the gateway in test mode using test API keys."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:282
+msgid "Description"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:284
+msgid "Payment method description that the customer will see on your checkout."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:285
+msgid "Pay securely with CeyPay using your digital currency balance on the Centralized exchange."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:289
+msgid "Merchant ID"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:291
+msgid "Your CeyPay Merchant ID."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:296
+msgid "Webhook Secret"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:298
+msgid "Secret key used to verify webhook signatures."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:303
+msgid "Analytics"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:305
+msgid "Enable usage analytics"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:306
+msgid "Help improve CeyPay by sharing anonymous payment flow data (e.g., provider selection, QR interactions, completion rates). No personal information, transaction amounts, or customer data is collected. Data is sent to Google Analytics."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:364
+msgid "Awaiting CeyPay payment provider selection."
+msgstr ""
+
+#. translators: %s: payment provider name
+#: includes/class-wc-gateway-ceypay.php:413
+msgid "Pay with %s"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:414
+msgid "Please scan the QR code below to complete your payment."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:420
+msgid "Waiting for payment..."
+msgstr ""
+
+#. translators: %s: payment provider name
+#: includes/class-wc-gateway-ceypay.php:424
+msgid "Open %s App"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:489
+msgid "Payment confirmed via CeyPay."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:548
+msgid "Payment simulated via Test Mode."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:635
+msgid "Payment confirmed via CeyPay Webhook."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:677
+msgid "Payment is under user review via CeyPay."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:701
+msgid "Payment QR code expired via CeyPay. User can refresh to try again."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:723
+msgid "Payment failed via CeyPay Webhook."
+msgstr ""
