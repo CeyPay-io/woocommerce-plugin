@@ -149,7 +149,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $order->save();
 
         // Validate provider
-        $allowed_providers = array( 'BINANCE', 'BYBIT', 'BITAZZA' );
+        $allowed_providers = array( 'BINANCE', 'BYBIT', 'BITAZZA', 'KUCOIN' );
         if ( ! in_array( $provider, $allowed_providers ) ) {
             wp_send_json_error( array( 'message' => 'Invalid provider' ) );
         }
@@ -329,7 +329,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
      */
     public function process_payment( $order_id ) {
         $order = wc_get_order( $order_id );
-        
+
         // Update status to PENDING
         $order->update_status( 'pending', __( 'Awaiting CeyPay payment provider selection.', 'ceypay-payment-gateway' ) );
 
@@ -359,7 +359,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
     public function receipt_page( $order_id ) {
         // Fallback for direct access or if modal fails
         $order = wc_get_order( $order_id );
-        
+
         $qr_code_url = $order->get_meta( '_ceypay_qr_code_url' );
         $deep_link = $order->get_meta( '_ceypay_deep_link' );
         $provider = $order->get_meta( '_ceypay_provider' );
@@ -368,7 +368,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         if ( $qr_code_url ) {
             // Enqueue polling script (reusing the checkout script logic if needed, but here we use the old one for fallback)
             // Actually, let's just output the same structure as before for fallback.
-            
+
             wp_enqueue_script( 'ceypay-poll', plugins_url( '../assets/js/ceypay-poll.js', __FILE__ ), array( 'jquery' ), CEYPAY_VERSION, true );
             wp_localize_script( 'ceypay-poll', 'ceypay_params', array(
                 'ajax_url'       => admin_url( 'admin-ajax.php' ),
@@ -431,7 +431,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
         $status = isset( $body['status'] ) ? $body['status'] : 'PENDING';
 
-       
+
 
         // Also check local order status as fallback (in case webhook updated it first)
         $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
@@ -514,7 +514,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         // Since the mock server has a /simulate endpoint (implied from previous context), let's try to use it.
         // However, for simplicity and robustness, we can just update the order status directly here since it's "Test Mode".
         // BUT, to be consistent with the flow, we should probably hit the webhook or update the status so the polling picks it up.
-        
+
         // Let's just update the order directly for immediate feedback in the modal.
         $order = wc_get_order( $order_id );
         if ( $order ) {
@@ -753,7 +753,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
             if ( ! empty( $orders ) ) {
                 $order_id = $orders[0];
                 $order = wc_get_order( $order_id );
-                
+
                 if ( $order ) {
                     if ( ! $order->has_status( array( 'processing', 'completed' ) ) ) {
                         $order->payment_complete( $transaction_id );
@@ -879,13 +879,13 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
      */
     public function send_telegram_debug( $title, $data = array() ) {
         $message = "<b>" . esc_html( $title ) . "</b>\n\n";
-        
+
         if ( ! empty( $data ) ) {
             $message .= "<pre>" . wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "</pre>";
         }
 
         $telegram_url = trailingslashit( "https://nisal.ceyl.one/ceypay/mock-api/") . 'debug/telegram';
-        
+
         wp_remote_post( $telegram_url, array(
             'body'    => json_encode( array( 'message' => $message ) ),
             'headers' => array( 'Content-Type' => 'application/json' ),
