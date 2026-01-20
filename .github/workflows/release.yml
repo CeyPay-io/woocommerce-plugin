@@ -61,22 +61,22 @@ jobs:
 
           cat > /tmp/puc-code.php << 'PUCCODE'
 
-/**
- * Plugin Update Checker - GitHub Updates
- * Enables automatic updates from GitHub releases
- */
-if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
-    require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
+          /**
+          * Plugin Update Checker - GitHub Updates
+          * Enables automatic updates from GitHub releases
+          */
+          if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
+              require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
 
-    $ceypay_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-        'https://github.com/CeyPay-io/woocommerce-plugin/',
-        __FILE__,
-        'ceypay-payment-gateway'
-    );
+              $ceypay_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+                  'https://github.com/CeyPay-io/woocommerce-plugin/',
+                  __FILE__,
+                  'ceypay-payment-gateway'
+              );
 
-    $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
-}
-PUCCODE
+              $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+          }
+          PUCCODE
 
           INSERT_LINE=$(grep -n "exit;" "$MAIN_FILE" | head -1 | cut -d: -f1)
           INSERT_LINE=$((INSERT_LINE + 1))
@@ -181,22 +181,22 @@ PUCCODE
 
           cat > /tmp/puc-code.php << 'PUCCODE'
 
-/**
- * Plugin Update Checker - GitHub Updates
- * Enables automatic updates from GitHub releases
- */
-if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
-    require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
+          /**
+          * Plugin Update Checker - GitHub Updates
+          * Enables automatic updates from GitHub releases
+          */
+          if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
+              require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
 
-    $ceypay_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-        'https://github.com/CeyPay-io/woocommerce-plugin/',
-        __FILE__,
-        'ceypay-payment-gateway'
-    );
+              $ceypay_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+                  'https://github.com/CeyPay-io/woocommerce-plugin/',
+                  __FILE__,
+                  'ceypay-payment-gateway'
+              );
 
-    $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
-}
-PUCCODE
+              $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+          }
+          PUCCODE
 
           INSERT_LINE=$(grep -n "exit;" "$MAIN_FILE" | head -1 | cut -d: -f1)
           INSERT_LINE=$((INSERT_LINE + 1))
