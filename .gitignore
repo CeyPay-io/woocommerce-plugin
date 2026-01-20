@@ -29,5 +29,5 @@ mock_server/orders.json
 .claude/
 .mcp.json
 
-assets/
+./assets/
 scripts/
