@@ -3,7 +3,7 @@
  * Plugin Name: CeyPay Payment Gateway
  * Plugin URI:  https://docs.ceypay.io/
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.2.2
+ * Version:     1.2.3
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
@@ -54,17 +54,17 @@ function ceypay_init_gateway_class() {
     CeyPay_Analytics::get_instance();
 
     // Register AJAX hooks globally (outside the class instance for simplicity, or instantiate to register)
-    // Since WC instantiates the gateway, we can hook into init to register AJAX if needed, 
-    // but usually, the gateway constructor handles it. 
+    // Since WC instantiates the gateway, we can hook into init to register AJAX if needed,
+    // but usually, the gateway constructor handles it.
     // However, WC only instantiates the gateway when needed.
     // To ensure AJAX works, we might need to instantiate it or register hooks separately.
     // A common pattern is to let the class register its own hooks in __construct.
     // But for AJAX to work for non-logged in users, the class must be instantiated.
-    
+
     // Let's rely on WC instantiating it, OR manually register the AJAX handler here if the class method is static.
     // Since our methods are not static, we need an instance.
     // But WC gateways are singletons or instantiated by WC.
-    
+
     // FIX: We will add a separate hook here to ensure AJAX is registered even if WC doesn't load the gateway on every page.
     // Only instantiate during AJAX requests to ensure hooks are registered.
     if ( wp_doing_ajax() ) {
@@ -110,7 +110,7 @@ function ceypay_admin_notices() {
     }
 
     $settings = get_option( 'woocommerce_ceypay_settings' );
-    
+
     // Check if enabled
     if ( ! isset( $settings['enabled'] ) || 'yes' !== $settings['enabled'] ) {
         return;
@@ -150,7 +150,7 @@ function ceypay_admin_scripts() {
     if ( ! $screen || 'woocommerce_page_wc-settings' !== $screen->id ) {
         return;
     }
-    
+
     // Check if we are on the payments tab
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checking current admin page, no data processing
     $admin_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
