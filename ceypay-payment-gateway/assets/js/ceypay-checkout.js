@@ -89,7 +89,7 @@ jQuery(document).ready(function($) {
                                 </svg>
                             </div>
                         </div>
-                        <div class="ceypay-provider-btn ceypay-provider-btn--disabled" role="button" aria-disabled="true">
+                        <div class="ceypay-provider-btn" role="button" tabindex="0" data-provider="KUCOIN">
                             <div class="ceypay-provider-icon">
                                 <img src="${ceypay_params.assets_url}images/kucoin-logo.svg" alt="KuCoin Pay">
                             </div>
@@ -97,7 +97,11 @@ jQuery(document).ready(function($) {
                                 <span class="ceypay-provider-name">KuCoin Pay</span>
                                 <span class="ceypay-provider-desc">Pay with crypto via KuCoin</span>
                             </div>
-                            <span class="ceypay-badge">Coming Soon</span>
+                            <div class="ceypay-chevron">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
                         </div>
                         <div class="ceypay-provider-btn ceypay-provider-btn--disabled" role="button" aria-disabled="true">
                             <div class="ceypay-provider-icon">
@@ -625,7 +629,7 @@ jQuery(document).ready(function($) {
     function showCeyPayError(message) {
         var errorHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ceypay-alert-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>' + message + '</span>';
         var $errorBox = $('#ceypay-error-message');
-        
+
         // Clear previous timeout
         if (window.ceypayErrorTimeout) {
             clearTimeout(window.ceypayErrorTimeout);
