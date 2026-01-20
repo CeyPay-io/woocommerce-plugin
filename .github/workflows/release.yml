@@ -3,7 +3,7 @@ name: Release
 on:
   pull_request:
     types: [opened, synchronize, closed]
-    branches: [main]
+    branches: [dev, main]
 
 permissions:
   contents: write
@@ -16,7 +16,7 @@ env:
 jobs:
   # RC Release - when PR is opened or updated
   rc-release:
-    if: github.event.pull_request.merged == false && github.event.action != 'closed'
+    if: github.event.pull_request.merged == false && github.event.action != 'closed' && github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -140,7 +140,7 @@ jobs:
 
   # Stable Release - when PR is merged
   stable-release:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
