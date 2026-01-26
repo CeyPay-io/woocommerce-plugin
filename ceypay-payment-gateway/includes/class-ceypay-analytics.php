@@ -39,7 +39,8 @@ class CeyPay_Analytics {
         add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_ga4_script' ), 5 );
 
         // Hook to enqueue Facebook Pixel
-        add_action( 'wp_head', array( $this, 'maybe_enqueue_fb_pixel' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_fb_pixel_scripts' ) );
+        add_action( 'wp_head', array( $this, 'output_fb_pixel_noscript' ) );
     }
 
     /**
@@ -228,9 +229,9 @@ class CeyPay_Analytics {
     }
 
     /**
-     * Conditionally enqueue Facebook Pixel
+     * Conditionally enqueue Facebook Pixel Scripts
      */
-    public function maybe_enqueue_fb_pixel() {
+    public function enqueue_fb_pixel_scripts() {
         if ( ! self::is_enabled() ) {
             return;
         }
@@ -242,55 +243,60 @@ class CeyPay_Analytics {
             return;
         }
 
-        $this->enqueue_fb_pixel_base( $pixel_id );
+        wp_enqueue_script( 'ceypay-fb-events', 'https://connect.facebook.net/en_US/fbevents.js', array(), null, false );
 
-        if ( ! function_exists( 'is_checkout' ) ) {
-            return;
-        }
-
-        // Track InitiateCheckout on checkout page (but not order received)
-        if ( is_checkout() && ! is_wc_endpoint_url( 'order-received' ) ) {
-             echo "<script>fbq('track', 'InitiateCheckout');</script>";
-        }
-
-        // Track Purchase on Order Received page
-        if ( is_wc_endpoint_url( 'order-received' ) ) {
-            $order_id = absint( get_query_var( 'order-received' ) );
-            if ( $order_id ) {
-                $order = wc_get_order( $order_id );
-                if ( $order ) {
-                    $amount = $order->get_total();
-                    $currency = $order->get_currency();
-                    echo "<script>fbq('track', 'Purchase', {value: " . esc_js( $amount ) . ", currency: '" . esc_js( $currency ) . "'}, {eventID: '" . esc_js( $order_id ) . "'});</script>";
-                }
-            }
-        }
-    }
-
-    /**
-     * Output Facebook Pixel Base Code
-     *
-     * @param string $pixel_id Facebook Pixel ID
-     */
-    private function enqueue_fb_pixel_base( $pixel_id ) {
-        ?>
-        <!-- Facebook Pixel Code -->
-        <script>
+        // Base Code (Init)
+        $init_code = "
         !function(f,b,e,v,n,t,s)
         {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};
         if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '<?php echo esc_js( $pixel_id ); ?>');
+        n.queue=[];}(window, document,'script');
+        fbq('init', '" . esc_js( $pixel_id ) . "');
         fbq('track', 'PageView');
-        </script>
+        ";
+        wp_add_inline_script( 'ceypay-fb-events', $init_code, 'before' );
+
+        // Track Events
+        $event_code = "";
+
+        if ( function_exists( 'is_checkout' ) ) {
+            // Track InitiateCheckout on checkout page (but not order received)
+            if ( is_checkout() && ! is_wc_endpoint_url( 'order-received' ) ) {
+                 $event_code .= "fbq('track', 'InitiateCheckout');";
+            }
+
+            // Track Purchase on Order Received page
+            if ( is_wc_endpoint_url( 'order-received' ) ) {
+                $order_id = absint( get_query_var( 'order-received' ) );
+                if ( $order_id ) {
+                    $order = wc_get_order( $order_id );
+                    if ( $order ) {
+                        $amount = $order->get_total();
+                        $currency = $order->get_currency();
+                        $event_code .= "fbq('track', 'Purchase', {value: " . esc_js( $amount ) . ", currency: '" . esc_js( $currency ) . "'}, {eventID: '" . esc_js( $order_id ) . "'});";
+                    }
+                }
+            }
+        }
+
+        if ( ! empty( $event_code ) ) {
+            wp_add_inline_script( 'ceypay-fb-events', $event_code );
+        }
+    }
+
+    /**
+     * Output Facebook Pixel Noscript
+     */
+    public function output_fb_pixel_noscript() {
+        if ( ! self::is_enabled() ) {
+            return;
+        }
+        $pixel_id = '1437220651304250';
+        ?>
         <noscript><img height="1" width="1" style="display:none"
         src="https://www.facebook.com/tr?id=<?php echo esc_attr( $pixel_id ); ?>&ev=PageView&noscript=1"
         /></noscript>
-        <!-- End Facebook Pixel Code -->
         <?php
     }
 }

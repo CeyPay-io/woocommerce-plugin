@@ -3,7 +3,7 @@
  * Plugin Name: CeyPay Payment Gateway
  * Plugin URI:  https://docs.ceypay.io/
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.2.4
+ * Version:     1.2.5
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
@@ -129,7 +129,7 @@ function ceypay_admin_notices() {
                 <div>
                     <h3 style="margin: 0 0 10px; color: #333; font-size: 18px;"><?php esc_html_e( 'Action Needed: Complete CeyPay Setup', 'ceypay-payment-gateway' ); ?></h3>
                     <p style="margin: 0 0 15px; font-size: 14px; color: #555;">
-                        <?php echo wp_kses( __( 'Your CeyPay payment gateway is almost ready! To start accepting crypto payments, you must configure your <strong>Merchant ID</strong>.', 'ceypay-payment-gateway' ), array( 'strong' => array() ) ); ?>
+                        <?php echo wp_kses_post( __( 'Your CeyPay payment gateway is almost ready! To start accepting crypto payments, you must configure your <strong>Merchant ID</strong>.', 'ceypay-payment-gateway' ) ); ?>
                     </p>
                     <a href="<?php echo esc_url( $settings_url ); ?>" class="button button-primary button-large" style="background-color: #1C6EF5; border-color: #1C6EF5;">
                         <?php esc_html_e( 'Complete Setup Now', 'ceypay-payment-gateway' ); ?>
@@ -168,15 +168,16 @@ function ceypay_admin_scripts() {
         $merchant_id = isset( $settings['merchant_id'] ) ? $settings['merchant_id'] : '';
 
         if ( empty( $merchant_id ) ) {
-            ?>
-            <script type="text/javascript">
+            $action_needed_text = __( 'Action Needed', 'ceypay-payment-gateway' );
+
+            wp_add_inline_script( 'jquery-core', "
                 jQuery(document).ready(function($) {
-                    var $row = $('tr[data-gateway_id="ceypay"]');
-                    if ($row.length) {
-                        // Find elements containing "Active" text
-                        $row.find('*').each(function() {
+                    var \$row = $('tr[data-gateway_id=\"ceypay\"]');
+                    if (\$row.length) {
+                        // Find elements containing \"Active\" text
+                        \$row.find('*').each(function() {
                             if ($(this).children().length === 0 && $(this).text().trim() === 'Active') {
-                                $(this).text('<?php echo esc_js( __( 'Action Needed', 'ceypay-payment-gateway' ) ); ?>');
+                                $(this).text('" . esc_js( $action_needed_text ) . "');
                                 $(this).css({
                                     'background-color': '#d63638',
                                     'color': '#fff',
@@ -188,9 +189,8 @@ function ceypay_admin_scripts() {
                         });
                     }
                 });
-            </script>
-            <?php
+            " );
         }
     }
 }
-add_action( 'admin_footer', 'ceypay_admin_scripts' );
+add_action( 'admin_enqueue_scripts', 'ceypay_admin_scripts' );
