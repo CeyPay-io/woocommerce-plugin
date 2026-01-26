@@ -108,7 +108,7 @@ Downloads from GitHub Releases include automatic update notifications via [Plugi
 
 ## Documentation
 
-- [Full Documentation](https://docs.ceypay.io/)
+- [Full Documentation](https://docs.ceypay.io)
 - [API Reference](https://docs.ceypay.io/api)
 
 ## Contributing
@@ -125,5 +125,5 @@ GPLv2 or later - see [LICENSE](ceypay-payment-gateway/LICENSE)
 
 ## Support
 
-- [Documentation](https://docs.ceypay.io/)
+- [Documentation](https://docs.ceypay.io/wordpress)
 - [GitHub Issues](https://github.com/CeyPay-io/woocommerce-plugin/issues)

@@ -16,7 +16,7 @@ Accept crypto payments via Binance Pay, Bybit, and Bitazza on your WooCommerce s
 
 The plugin features a polished, responsive checkout modal that keeps customers on your site while they scan the QR code or use deep links on mobile devices.
 
-**[View Full Documentation](https://docs.ceypay.io/)**
+**[View Full Documentation](https://docs.ceypay.io/wordpress)**
 
 ### Key Features
 
@@ -59,7 +59,7 @@ No! This plugin only facilitates the payment request. All crypto transactions ha
 The order remains "Pending Payment". If they paid before closing, our webhook handler will still update the order status in the background.
 
 = Where can I find detailed documentation? =
-Visit our full documentation at [docs.ceypay.io](https://docs.ceypay.io/) for setup guides, troubleshooting, and API reference.
+Visit our full documentation at [docs.ceypay.io](https://docs.ceypay.io/wordpress) for setup guides, troubleshooting, and API reference.
 
 == Screenshots ==
 
