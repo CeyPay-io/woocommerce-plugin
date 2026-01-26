@@ -222,6 +222,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
              }
              if ( isset( $body['id'] ) ) {
                  $order->update_meta_data( '_ceypay_transaction_id', $body['id'] );
+                 $order->set_transaction_id( $body['id'] ); // Store in WooCommerce native field for efficient querying
              }
              $order->update_meta_data( '_ceypay_provider', $provider );
              $order->save();
@@ -742,12 +743,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $this->log( "Processing webhook for Transaction ID: $transaction_id, Status: $status" );
 
         if ( 'SUCCESS' === $status || 'PAID' === $status ) {
-            // Find order by transaction ID
+            // Find order by transaction ID using WooCommerce's native transaction_id field
             $orders = wc_get_orders( array(
-                'limit' => 1,
-                'meta_key' => '_ceypay_transaction_id',
-                'meta_value' => $transaction_id,
-                'return' => 'ids',
+                'limit'          => 1,
+                'transaction_id' => $transaction_id,
+                'return'         => 'ids',
             ) );
 
             if ( ! empty( $orders ) ) {
@@ -786,10 +786,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         } elseif ( 'USER_REVIEW' === $status ) {
             // Payment is under user review (e.g., manual verification required)
             $orders = wc_get_orders( array(
-                'limit' => 1,
-                'meta_key' => '_ceypay_transaction_id',
-                'meta_value' => $transaction_id,
-                'return' => 'ids',
+                'limit'          => 1,
+                'transaction_id' => $transaction_id,
+                'return'         => 'ids',
             ) );
 
             if ( ! empty( $orders ) ) {
@@ -810,10 +809,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         } elseif ( 'EXPIRED' === $status ) {
             // QR code expired - allow user to refresh and try again
             $orders = wc_get_orders( array(
-                'limit' => 1,
-                'meta_key' => '_ceypay_transaction_id',
-                'meta_value' => $transaction_id,
-                'return' => 'ids',
+                'limit'          => 1,
+                'transaction_id' => $transaction_id,
+                'return'         => 'ids',
             ) );
 
             if ( ! empty( $orders ) ) {
@@ -834,10 +832,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         } elseif ( 'FAILED' === $status ) {
             // Payment failed - mark order as failed
             $orders = wc_get_orders( array(
-                'limit' => 1,
-                'meta_key' => '_ceypay_transaction_id',
-                'meta_value' => $transaction_id,
-                'return' => 'ids',
+                'limit'          => 1,
+                'transaction_id' => $transaction_id,
+                'return'         => 'ids',
             ) );
 
             if ( ! empty( $orders ) ) {
