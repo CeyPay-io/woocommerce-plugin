@@ -51,7 +51,7 @@ When Test Mode is active:
 
 | Feature          | Behavior                                                 |
 | ---------------- | -------------------------------------------------------- |
-| **API Endpoint** | Connects to the CeyPay test server                       |
+| **API Endpoint** | Connects to `sandbox-api.ceypay.io`                      |
 | **Visibility**   | Only administrators can see CeyPay at checkout           |
 | **Simulation**   | A "Simulate Success" button appears in the payment modal |
 | **Logging**      | Debug information is written to WooCommerce logs         |
@@ -59,6 +59,8 @@ When Test Mode is active:
 <Info>
   Test Mode uses a predefined webhook secret (`mock_secret_key`) for signature
   verification, so you don't need to configure separate test credentials.
+  
+  For testing, you can use the sandbox Merchant ID: `289caebb-ed95-465c-a967-68963bdd20de`
 </Info>
 
 ## Supported Providers

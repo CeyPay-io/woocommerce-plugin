@@ -5,6 +5,22 @@ description: How to test your CeyPay WordPress Plugin integration before accepti
 
 Thoroughly testing your payment integration is essential before going live. CeyPay provides a built-in Test Mode that simulates the entire payment flow without processing real cryptocurrency transactions.
 
+## Test Environment Credentials
+
+When testing with the CeyPay sandbox environment, use the following credentials:
+
+<ResponseField name="Test API Endpoint" type="url">
+  `https://sandbox-api.ceypay.io/`
+</ResponseField>
+
+<ResponseField name="Test Merchant ID" type="text">
+  `289caebb-ed95-465c-a967-68963bdd20de`
+</ResponseField>
+
+<Info>
+  These credentials are automatically used when you enable Test Mode in the plugin settings. The plugin will connect to the sandbox API instead of the production environment.
+</Info>
+
 ## Enabling Test Mode
 
 <Steps>

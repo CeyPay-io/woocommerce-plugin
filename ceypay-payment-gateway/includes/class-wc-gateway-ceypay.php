@@ -38,9 +38,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $this->description    = __( 'Pay securely with CeyPay using digital currency balance on your favorite CEX.', 'ceypay-payment-gateway' );
         $this->enabled        = $this->get_option( 'enabled' );
         $this->testmode       = 'yes' === $this->get_option( 'testmode' );
-        $this->merchant_id    = $this->get_option( 'merchant_id' );
+        $this->merchant_id    = $this->testmode ? '289caebb-ed95-465c-a967-68963bdd20de' : $this->get_option( 'merchant_id' );
 
-        $this->api_url        = $this->testmode ? 'https://sandbox.ceypay.io/' : 'https://api.ceypay.io/';
+        $this->api_url        = $this->testmode ? 'https://sandbox-api.ceypay.io/' : 'https://api.ceypay.io/';
 
         // Actions
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
