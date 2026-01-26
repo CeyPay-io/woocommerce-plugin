@@ -36,7 +36,10 @@ jQuery(document).ready(function($) {
                             <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <h2 class="ceypay-modal__title" id="ceypay-provider-title">Select your provider</h2>
+                    <div class="ceypay-header-center">
+                        <h2 class="ceypay-modal__title" id="ceypay-provider-title">Select your provider</h2>
+                        <span class="ceypay-testmode-badge ceypay-testmode-badge--modal" id="ceypay-testmode-badge" style="display: none;">Sandbox</span>
+                    </div>
                     <div class="ceypay-help-btn" role="button" tabindex="0" aria-label="Help">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
@@ -53,6 +56,16 @@ jQuery(document).ready(function($) {
 
                 <!-- Subtitle -->
                 <p class="ceypay-modal__subtitle" id="ceypay-subtitle">Choose your preferred payment method.</p>
+                <div id="ceypay-testmode-alert" class="ceypay-alert-box" style="display: none;">
+                    <div class="ceypay-alert-content">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span>Test Mode Active: No real funds will be deducted.</span>
+                    </div>
+                </div>
 
                 <!-- Error Message -->
                 <div id="ceypay-error-message" class="ceypay-error-message" style="display: none;"></div>
@@ -467,6 +480,15 @@ jQuery(document).ready(function($) {
         window.ceypayOrderData = data;
         window.ceypaySelectedProvider = null; // Track current provider for switch detection
 
+        // Show/hide test mode badge AND alert
+        if (data.test_mode) {
+            $('#ceypay-testmode-badge').show();
+            $('#ceypay-testmode-alert').show();
+        } else {
+            $('#ceypay-testmode-badge').hide();
+            $('#ceypay-testmode-alert').hide();
+        }
+
         // Track modal open event and start engagement timer
         if (window.CeyPayAnalytics) {
             window.CeyPayAnalytics.trackModalOpen(data);
@@ -490,6 +512,12 @@ jQuery(document).ready(function($) {
     function showProviderSelection(animate) {
         $('#ceypay-provider-title').text('Select Provider');
         $('#ceypay-subtitle').text('Choose your preferred payment method.').show();
+
+        // Ensure test mode alert is shown if active
+        if (window.ceypayOrderData && window.ceypayOrderData.test_mode) {
+             $('#ceypay-testmode-alert').show();
+        }
+
         $('#ceypay-error-message').hide();
         $('#ceypay-actions').hide();
         $('.ceypay-back-btn').hide();
@@ -530,6 +558,7 @@ jQuery(document).ready(function($) {
 
         $('#ceypay-provider-title').text('Pay with ' + toTitleCase(data.provider));
         $('#ceypay-subtitle').hide();
+        $('#ceypay-testmode-alert').hide(); // Hide test mode alert on QR screen to save space
 
         var priceHtml = '<div style="text-align: center;">Scan the QR or open your app to finish checkout.</div>';
         if (data.fee_breakdown && data.fee_breakdown.netAmountUSDT && data.currency_amount) {
