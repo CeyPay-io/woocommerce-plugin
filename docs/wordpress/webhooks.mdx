@@ -1,0 +1,258 @@
+---
+title: Webhooks
+description: Technical reference for CeyPay WordPress Plugin webhook integration and signature verification.
+---
+
+<div style={{ textAlign: 'center', margin: '20px 0' }}>
+  <img src="/images/ceypay-symbol.png" alt="CeyPay" style={{ height: '60px' }} />
+</div>
+
+Webhooks allow CeyPay to notify your WooCommerce store in real-time when payment events occur. This ensures orders are updated immediately when customers complete their payments.
+
+## Webhook Endpoint
+
+CeyPay sends webhook notifications to your store's WooCommerce API endpoint:
+
+```
+https://yoursite.com/?wc-api=WC_Gateway_CeyPay
+```
+
+This URL is automatically configured by the plugin. You'll need to provide this URL in your CeyPay merchant dashboard so the payment system knows where to send notifications.
+
+<Note>
+  The webhook URL is generated automatically by WooCommerce. You can find the exact URL by checking the webhook configuration in your CeyPay dashboard or by examining the `webhookUrl` parameter in API requests.
+</Note>
+
+## Webhook Events
+
+CeyPay sends webhooks for the following payment status changes:
+
+| Status | Description | WooCommerce Action |
+|--------|-------------|-------------------|
+| `SUCCESS` | Payment completed successfully | Order marked as "Processing" |
+| `PAID` | Payment confirmed (alias for SUCCESS) | Order marked as "Processing" |
+| `EXPIRED` | Payment window expired | Order marked as "Failed" |
+| `FAILED` | Payment was declined or errored | Order marked as "Failed" |
+
+## Webhook Payload
+
+### Request Headers
+
+Each webhook request includes these headers for verification:
+
+| Header | Description |
+|--------|-------------|
+| `X-Webhook-Signature` | HMAC-SHA256 signature of the payload |
+| `X-Webhook-Timestamp` | Unix timestamp when the webhook was sent |
+| `Content-Type` | Always `application/json` |
+
+### Request Body
+
+The webhook payload is a JSON object containing payment details:
+
+<ResponseField name="paymentId" type="string" required>
+  Unique identifier for the payment transaction. This is stored in the order metadata as `_ceypay_transaction_id`.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  Alternative field name for the payment ID. The plugin accepts either `paymentId` or `transactionId`.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Current payment status. One of: `SUCCESS`, `PAID`, `EXPIRED`, `FAILED`.
+</ResponseField>
+
+### Example Payload
+
+```json
+{
+  "paymentId": "pay_abc123xyz789",
+  "status": "SUCCESS",
+  "amount": 100.00,
+  "currency": "USD",
+  "provider": "BINANCE"
+}
+```
+
+## Signature Verification
+
+All webhook requests are signed using **ED25519 digital signatures** to ensure authenticity. The plugin automatically verifies signatures before processing any webhook.
+
+### How Signatures Work
+
+1. CeyPay concatenates the timestamp and JSON payload
+2. The combined string is signed using ED25519 private key cryptography
+3. The resulting signature (base64 encoded) is included in the `X-Webhook-Signature` header
+4. The plugin fetches CeyPay's public key and verifies the signature
+
+### Verification Process
+
+The plugin verifies signatures using this logic:
+
+```php
+// Validate timestamp (must be within 5 minutes)
+$current_time = time();
+if (abs($current_time - intval($timestamp)) > 300) {
+    // Reject old webhooks - prevents replay attacks
+    return 401;
+}
+
+// Fetch public key from CeyPay API (cached for 1 hour)
+$public_key = get_webhook_public_key();
+
+// Construct signature payload
+$signature_payload = $timestamp . $json_body;
+
+// Verify ED25519 signature using sodium extension
+$signature_binary = base64_decode($signature);
+$is_valid = sodium_crypto_sign_verify_detached(
+    $signature_binary,
+    $signature_payload,
+    $public_key
+);
+
+if ($is_valid) {
+    // Signature valid - process webhook
+} else {
+    // Signature invalid - reject request
+}
+```
+
+<Warning>
+  If signature verification fails, the webhook returns a `401 Unauthorized` response and the request is logged. This can occur if:
+  - The webhook timestamp is older than 5 minutes (replay attack protection)
+  - The public key cannot be fetched from the CeyPay API
+  - The signature doesn't match the expected value
+</Warning>
+
+### Replay Attack Protection
+
+The plugin validates that webhook timestamps are within **5 minutes** of the current server time. This prevents attackers from capturing and replaying old webhook requests. Additionally, each webhook is tracked for 1 hour to prevent duplicate processing.
+
+### Test Mode Signatures
+
+When Test Mode is enabled, the plugin fetches the public key from the test API endpoint (`https://dev-api.ceypay.io/merchant/webhook-public-key`). Production mode uses your configured API URL.
+
+## Order Matching
+
+The plugin matches incoming webhooks to WooCommerce orders using the transaction ID stored in order metadata.
+
+### Lookup Process
+
+1. Extract `paymentId` or `transactionId` from webhook payload
+2. Query WooCommerce orders for meta key `_ceypay_transaction_id`
+3. If found, update the order status based on payment status
+4. If not found, log the error (order may have been deleted)
+
+### Stored Order Metadata
+
+The following metadata is stored on each order:
+
+| Meta Key | Description |
+|----------|-------------|
+| `_ceypay_transaction_id` | CeyPay transaction identifier |
+| `_ceypay_provider` | Selected payment provider (BINANCE, BYBIT, BITAZZA) |
+| `_ceypay_qr_code_url` | QR code content URL |
+| `_ceypay_deep_link` | Deep link URL for mobile wallets |
+
+**Available Providers:**
+
+<div style={{ display: 'flex', gap: '20px', margin: '15px 0', flexWrap: 'wrap', alignItems: 'center' }}>
+  <img src="/images/binance.svg" alt="Binance Pay" style={{ height: '24px' }} />
+  <img src="/images/bybit.svg" alt="Bybit" style={{ height: '24px' }} />
+  <img src="/images/bitazza.svg" alt="Bitazza" style={{ height: '24px' }} />
+</div>
+
+## Handling Webhook Responses
+
+### Success Response
+
+Return HTTP `200 OK` to acknowledge successful webhook processing:
+
+```http
+HTTP/1.1 200 OK
+```
+
+### Error Responses
+
+| Status Code | Meaning |
+|-------------|---------|
+| `400 Bad Request` | Invalid or malformed payload |
+| `401 Unauthorized` | Signature verification failed |
+| `405 Method Not Allowed` | Non-POST request received |
+| `500 Internal Server Error` | Webhook secret not configured |
+
+## Debugging Webhooks
+
+### Enable Logging
+
+In Test Mode, webhook activity is automatically logged to WooCommerce logs. Access logs at:
+
+**WooCommerce > Status > Logs** → Select files prefixed with `ceypay-`
+
+### Log Entries
+
+Typical log entries include:
+
+```
+Webhook received: {"paymentId":"pay_123","status":"SUCCESS"}
+Signature Check: Received: abc... Computed: abc... Match: YES
+Processing webhook for Transaction ID: pay_123, Status: SUCCESS
+Order #456 marked as paid.
+```
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="Signature Mismatch">
+    **Cause:** Webhook secret doesn't match between CeyPay dashboard and plugin settings.
+
+    **Solution:** Copy the webhook secret directly from your CeyPay dashboard and paste it into the plugin settings. Avoid adding extra spaces or characters.
+  </Accordion>
+  <Accordion title="Order Not Found">
+    **Cause:** The order was deleted, or the customer abandoned checkout before the QR code was generated.
+
+    **Solution:** This is usually expected behavior for abandoned checkouts. No action required.
+  </Accordion>
+  <Accordion title="Webhooks Not Received">
+    **Cause:** Server firewall blocking incoming requests, or site not accessible from internet.
+
+    **Solution:** Ensure your site has a valid SSL certificate and is publicly accessible. Check server firewall rules.
+  </Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Keep Secret Secure" icon="key">
+    Never expose your webhook secret in client-side code, version control, or public logs.
+  </Card>
+  <Card title="Use HTTPS" icon="lock">
+    Always use HTTPS for your webhook endpoint. HTTP webhooks should be rejected.
+  </Card>
+  <Card title="Verify Signatures" icon="shield-check">
+    Always verify webhook signatures. The plugin does this automatically.
+  </Card>
+  <Card title="Idempotency" icon="rotate">
+    Handle duplicate webhooks gracefully. The plugin checks order status before updating.
+  </Card>
+</CardGroup>
+
+## Retry Policy
+
+If your webhook endpoint is unavailable, CeyPay may retry the webhook. The plugin handles this by checking if the order is already processed before making changes.
+
+<Tip>
+  The plugin includes fallback payment status polling, so even if a webhook fails, payments will still be confirmed when the customer's browser polls for status updates.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Solutions for common webhook and integration issues.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration">
+    Review all available plugin settings.
+  </Card>
+</CardGroup>

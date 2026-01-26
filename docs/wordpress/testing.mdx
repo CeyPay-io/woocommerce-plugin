@@ -1,0 +1,230 @@
+---
+title: Testing
+description: How to test your CeyPay WordPress Plugin integration before accepting real payments.
+---
+
+Thoroughly testing your payment integration is essential before going live. CeyPay provides a built-in Test Mode that simulates the entire payment flow without processing real cryptocurrency transactions.
+
+## Test Environment Credentials
+
+When testing with the CeyPay sandbox environment, use the following credentials:
+
+<ResponseField name="Test API Endpoint" type="url">
+  `https://sandbox-api.ceypay.io/`
+</ResponseField>
+
+<ResponseField name="Test Merchant ID" type="text">
+  `289caebb-ed95-465c-a967-68963bdd20de`
+</ResponseField>
+
+<Info>
+  These credentials are automatically used when you enable Test Mode in the plugin settings. The plugin will connect to the sandbox API instead of the production environment.
+</Info>
+
+## Enabling Test Mode
+
+<Steps>
+  <Step title="Access Settings">
+    Navigate to **WooCommerce > Settings > Payments > CeyPay** in your WordPress admin.
+  </Step>
+  <Step title="Enable Test Mode">
+    Check the box labeled **Enable Test Mode**.
+  </Step>
+  <Step title="Save Changes">
+    Click **Save changes** at the bottom of the page.
+  </Step>
+</Steps>
+
+<Info>
+  When Test Mode is enabled, only logged-in administrators can see and use the CeyPay payment option. Regular customers will not see it at checkout.
+</Info>
+
+## Testing the Payment Flow
+
+### Complete Test Transaction
+
+<Steps>
+  <Step title="Add Products to Cart">
+    Browse your store as an administrator and add one or more products to your cart.
+  </Step>
+  <Step title="Proceed to Checkout">
+    Go to the checkout page and fill in the required billing details.
+  </Step>
+  <Step title="Select CeyPay">
+    Choose **CeyPay** as your payment method. You should see the CeyPay logo and description.
+  </Step>
+  <Step title="Place Order">
+    Click **Place Order** to initiate the payment process.
+  </Step>
+  <Step title="Select Provider">
+    In the modal that appears, select a crypto provider:
+
+    <div style={{ display: 'flex', gap: '20px', margin: '15px 0', flexWrap: 'wrap' }}>
+      <img src="/images/binance.svg" alt="Binance Pay" style={{ height: '28px' }} />
+      <img src="/images/bybit.svg" alt="Bybit" style={{ height: '28px' }} />
+      <img src="/images/bitazza.svg" alt="Bitazza" style={{ height: '28px' }} />
+    </div>
+  </Step>
+  <Step title="View QR Code">
+    A QR code will be generated. In Test Mode, you'll also see a **"Simulate Success (Test Mode)"** button.
+  </Step>
+  <Step title="Simulate Payment">
+    Click the simulation button to complete the test payment.
+  </Step>
+  <Step title="Verify Completion">
+    You should be redirected to the Order Received page, and the order status should change to "Processing".
+  </Step>
+</Steps>
+
+### What to Verify
+
+Use this checklist to ensure your integration is working correctly:
+
+<AccordionGroup>
+  <Accordion title="Checkout Display">
+    - [ ] CeyPay appears in the payment methods list
+    - [ ] Logo displays correctly (both light and dark themes if applicable)
+    - [ ] Description text is visible
+  </Accordion>
+  <Accordion title="Payment Modal">
+    - [ ] Modal opens after clicking "Place Order"
+    - [ ] All three providers are displayed (Binance, Bybit, Bitazza)
+    - [ ] Provider selection works correctly
+    - [ ] QR code loads after selecting a provider
+    - [ ] "Simulate Success" button appears in Test Mode
+  </Accordion>
+  <Accordion title="Order Processing">
+    - [ ] Order is created with "Pending Payment" status initially
+    - [ ] Order transitions to "Processing" after simulated payment
+    - [ ] Order notes show payment confirmation
+    - [ ] Customer receives order confirmation email
+  </Accordion>
+  <Accordion title="Mobile Experience">
+    - [ ] Modal is responsive on mobile devices
+    - [ ] Deep link button appears for mobile users
+    - [ ] QR code is scannable on smaller screens
+  </Accordion>
+</AccordionGroup>
+
+## Testing Webhooks
+
+While Test Mode simulates immediate payment confirmation, you should also verify that webhooks work correctly.
+
+### Check Webhook Logs
+
+<Steps>
+  <Step title="Enable WooCommerce Logging">
+    Go to **WooCommerce > Status > Logs** to access the log files.
+  </Step>
+  <Step title="Find CeyPay Logs">
+    Look for log files prefixed with `ceypay-`. These contain debug information about webhook processing.
+  </Step>
+  <Step title="Review Entries">
+    Check for successful webhook receipts and any error messages.
+  </Step>
+</Steps>
+
+### Webhook Testing Tools
+
+For more thorough webhook testing, you can use tools like:
+
+- **ngrok** - Create a public URL for your local development environment
+- **Webhook.site** - Inspect incoming webhook payloads
+- **RequestBin** - Debug webhook requests
+
+<Warning>
+  These tools are for development/testing only. Never expose your production webhook secret or use these tools on a live store.
+</Warning>
+
+## Testing WooCommerce Blocks
+
+If your store uses the WooCommerce Blocks checkout:
+
+<Steps>
+  <Step title="Verify Block Checkout">
+    Ensure your checkout page uses the Checkout Block rather than the shortcode-based checkout.
+  </Step>
+  <Step title="Test Payment Flow">
+    Follow the same testing steps as above. The CeyPay payment option should integrate seamlessly.
+  </Step>
+  <Step title="Check Console">
+    Open browser developer tools and check for any JavaScript errors during checkout.
+  </Step>
+</Steps>
+
+## Testing Edge Cases
+
+### Payment Expiration
+
+To test expired payments:
+
+1. Start a test payment but don't click "Simulate Success"
+2. Wait for the payment to expire (or close the modal)
+3. Verify the order remains in "Pending Payment" status
+
+### Failed Payments
+
+Failed payments can be simulated by:
+
+1. Using invalid test data (if supported by the test API)
+2. Manually updating order status to "Failed" in WooCommerce admin
+3. Checking that appropriate error messages display
+
+### Multiple Payments
+
+Test scenarios with:
+
+- Multiple items in cart
+- Various currencies (if your store supports them)
+- Different customer billing information
+
+## Going Live Checklist
+
+Before disabling Test Mode and accepting real payments, verify:
+
+<Accordion title="Pre-Launch Checklist">
+  - [ ] All test transactions complete successfully
+  - [ ] Webhooks are received and processed correctly
+  - [ ] Order emails are sent properly
+  - [ ] Order statuses update as expected
+  - [ ] Mobile experience works correctly
+  - [ ] Error handling works (network failures, etc.)
+  - [ ] **Merchant ID** is set to your production credentials
+  - [ ] **Webhook Secret** is set to your production key
+  - [ ] SSL certificate is valid and not expired
+  - [ ] Site is accessible from the internet
+</Accordion>
+
+## Disabling Test Mode
+
+Once testing is complete:
+
+<Steps>
+  <Step title="Access Settings">
+    Go to **WooCommerce > Settings > Payments > CeyPay**.
+  </Step>
+  <Step title="Disable Test Mode">
+    Uncheck **Enable Test Mode**.
+  </Step>
+  <Step title="Verify Credentials">
+    Confirm your production **Merchant ID** and **Webhook Secret** are entered correctly.
+  </Step>
+  <Step title="Save Changes">
+    Click **Save changes**.
+  </Step>
+</Steps>
+
+<Check>
+  Your store is now ready to accept real cryptocurrency payments through CeyPay.
+</Check>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Webhook Reference" icon="webhook" href="/webhooks">
+    Deep dive into webhook payloads and signature verification.
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Solutions for common issues you might encounter.
+  </Card>
+</CardGroup>

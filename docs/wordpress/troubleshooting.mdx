@@ -1,0 +1,294 @@
+---
+title: Troubleshooting
+description: Solutions for common issues with CeyPay WordPress Plugin.
+---
+
+This guide covers the most common issues you might encounter when using CeyPay and how to resolve them.
+
+## Installation Issues
+
+<AccordionGroup>
+  <Accordion title="CeyPay not showing in payment methods">
+    **Symptoms:** After installation, CeyPay doesn't appear in WooCommerce > Settings > Payments.
+
+    **Solutions:**
+    1. Ensure WooCommerce is installed and activated
+    2. Check that CeyPay plugin is activated in Plugins > Installed Plugins
+    3. Clear any caching plugins or server cache
+    4. Verify PHP version is 7.4 or higher in Tools > Site Health
+
+    ```php
+    // Check PHP version
+    phpinfo(); // Should show PHP 7.4+
+    ```
+  </Accordion>
+
+  <Accordion title="Plugin activation error">
+    **Symptoms:** Error message when trying to activate the plugin.
+
+    **Common causes:**
+    - PHP version too low (requires 7.4+)
+    - WooCommerce not active
+    - File permissions issue
+
+    **Solution:** Check the error message for specifics. Ensure all requirements are met before activating.
+  </Accordion>
+
+  <Accordion title="Conflict with other plugins">
+    **Symptoms:** Site crashes or behaves unexpectedly after installing CeyPay.
+
+    **Solution:**
+    1. Deactivate all plugins except WooCommerce and CeyPay
+    2. Test if the issue persists
+    3. Reactivate plugins one by one to identify the conflict
+    4. Contact support with the conflicting plugin name
+  </Accordion>
+</AccordionGroup>
+
+## Checkout Issues
+
+<AccordionGroup>
+  <Accordion title="CeyPay not visible at checkout">
+    **Symptoms:** CeyPay doesn't appear as a payment option on the checkout page.
+
+    **Possible causes:**
+    1. **Gateway disabled** - Enable it in WooCommerce > Settings > Payments
+    2. **Test Mode enabled** - Only admins see CeyPay in test mode; log in as admin
+    3. **Missing credentials** - Configure Merchant ID and Webhook Secret
+    4. **Currency not supported** - Verify your store currency is supported
+
+    **Quick check:**
+    - Look for "Action Needed" badge next to CeyPay in payment settings
+    - Review the admin notice at the top of WordPress admin pages
+  </Accordion>
+
+  <Accordion title="Payment modal not opening">
+    **Symptoms:** Clicking "Place Order" doesn't open the payment modal.
+
+    **Solutions:**
+    1. Check browser console for JavaScript errors (F12 > Console)
+    2. Ensure jQuery is loaded (required by WooCommerce)
+    3. Try a different browser or incognito mode
+    4. Disable other JavaScript-heavy plugins temporarily
+    5. Check if a page builder is interfering with checkout
+
+    **Console command to verify:**
+    ```javascript
+    // Check if CeyPay scripts are loaded
+    console.log(typeof ceypay_params);
+    ```
+  </Accordion>
+
+  <Accordion title="QR code not generating">
+    **Symptoms:** Provider selection works, but no QR code appears.
+
+    **Causes:**
+    - API connection failure
+    - Invalid Merchant ID
+    - Server cannot make outbound HTTPS requests
+
+    **Solutions:**
+    1. Verify your Merchant ID is correct
+    2. Check if your server can reach external APIs
+    3. Review WooCommerce logs for API errors
+    4. Contact support if the issue persists
+  </Accordion>
+
+  <Accordion title="Error: Invalid parameters">
+    **Symptoms:** Error message about invalid parameters when generating QR code.
+
+    **Solution:** This usually indicates missing order data. Ensure:
+    - All required checkout fields are filled
+    - The cart contains valid products
+    - The currency is supported
+  </Accordion>
+</AccordionGroup>
+
+## Webhook Issues
+
+<AccordionGroup>
+  <Accordion title="Orders stuck on 'Pending Payment'">
+    **Symptoms:** Customer completes payment, but order status doesn't update.
+
+    **Causes:**
+    1. Webhooks not reaching your server
+    2. Signature verification failing
+    3. Site not publicly accessible
+
+    **Diagnostic steps:**
+    1. Check WooCommerce logs for webhook entries
+    2. Verify your site is accessible from the internet
+    3. Ensure SSL certificate is valid
+    4. Confirm webhook secret matches exactly
+
+    **Temporary workaround:** The plugin includes status polling, so the customer should see success if they keep the modal open. The webhook will update the order for admin visibility.
+  </Accordion>
+
+  <Accordion title="Webhook signature mismatch">
+    **Symptoms:** Logs show "Webhook signature mismatch" errors.
+
+    **Solution:**
+    1. Copy the Webhook Secret directly from your CeyPay dashboard
+    2. Paste it into CeyPay settings without any extra spaces
+    3. Save settings and test again
+
+    <Warning>
+      The webhook secret is case-sensitive. Copy it exactly as shown.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Webhooks not received at all">
+    **Symptoms:** No webhook entries in logs, even after successful test payments.
+
+    **Checklist:**
+    - [ ] Site has valid SSL certificate (HTTPS required)
+    - [ ] Site is not on localhost (use ngrok for local testing)
+    - [ ] Firewall allows incoming POST requests
+    - [ ] .htaccess or server config doesn't block the API endpoint
+    - [ ] The webhook URL is correctly registered in CeyPay dashboard
+
+    **Test your endpoint:**
+    ```bash
+    curl -X POST https://yoursite.com/?wc-api=WC_Gateway_CeyPay
+    # Should return 400 (Bad Request) - this means the endpoint is reachable
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Order Issues
+
+<AccordionGroup>
+  <Accordion title="Duplicate orders">
+    **Symptoms:** Multiple orders created for a single payment.
+
+    **Cause:** Customer clicking "Place Order" multiple times.
+
+    **Solutions:**
+    1. The plugin should prevent this, but if it occurs:
+    2. Check for JavaScript errors that might prevent modal from opening
+    3. Ensure the checkout page doesn't have duplicate form submissions
+    4. Review any caching plugin settings
+  </Accordion>
+
+  <Accordion title="Order marked as paid but payment not received">
+    **Symptoms:** Order shows as Processing, but no payment in crypto wallet.
+
+    **Cause:** This should only happen in Test Mode with simulated payments.
+
+    **Solution:**
+    1. Verify Test Mode is disabled for production
+    2. Check that production Merchant ID is configured
+    3. Review CeyPay dashboard for transaction records
+    4. Contact CeyPay support with order details
+  </Accordion>
+
+  <Accordion title="Wrong amount shown">
+    **Symptoms:** The payment amount in the modal doesn't match the order total.
+
+    **Cause:** Currency conversion or rounding issues.
+
+    **Solution:**
+    1. Verify your store currency settings
+    2. Check if any plugins modify order totals
+    3. The USDT amount may differ due to exchange rates
+  </Accordion>
+</AccordionGroup>
+
+## WooCommerce Blocks Issues
+
+<AccordionGroup>
+  <Accordion title="CeyPay not working with Blocks checkout">
+    **Symptoms:** CeyPay appears but doesn't function correctly with the Checkout Block.
+
+    **Solutions:**
+    1. Ensure WooCommerce Blocks is up to date
+    2. Check browser console for JavaScript errors
+    3. Verify the Checkout Block is properly configured
+    4. Try switching to classic checkout temporarily to isolate the issue
+  </Accordion>
+
+  <Accordion title="Modal styling broken in Blocks">
+    **Symptoms:** Payment modal appears but looks broken or unstyled.
+
+    **Solutions:**
+    1. Clear all caches (page cache, browser cache, CDN cache)
+    2. Check if your theme overrides WooCommerce styles
+    3. Ensure CeyPay CSS file is loading (check Network tab in dev tools)
+  </Accordion>
+</AccordionGroup>
+
+## Mobile Issues
+
+<AccordionGroup>
+  <Accordion title="Deep link not opening wallet app">
+    **Symptoms:** Clicking the app button on mobile doesn't open the crypto wallet.
+
+    **Causes:**
+    - Wallet app not installed
+    - Deep link not supported by browser
+    - Browser blocking the redirect
+
+    **Solutions:**
+    1. Ensure the customer has the relevant wallet app installed
+    2. Try opening the link in the default mobile browser
+    3. The QR code remains available as a fallback
+  </Accordion>
+
+  <Accordion title="Modal too small on mobile">
+    **Symptoms:** Payment modal is difficult to use on mobile devices.
+
+    **Solution:** The modal should be responsive by default. If issues occur:
+    1. Check if your theme has mobile-specific CSS that conflicts
+    2. Disable any mobile optimization plugins temporarily
+    3. Test in a default WordPress theme (like Storefront)
+  </Accordion>
+</AccordionGroup>
+
+## Debug Mode
+
+For persistent issues, enable debug logging:
+
+<Steps>
+  <Step title="Enable Test Mode">
+    Go to WooCommerce > Settings > Payments > CeyPay and enable Test Mode.
+  </Step>
+  <Step title="Reproduce the Issue">
+    Attempt the action that's causing problems.
+  </Step>
+  <Step title="Review Logs">
+    Navigate to WooCommerce > Status > Logs and find the `ceypay-*` log file.
+  </Step>
+  <Step title="Analyze Entries">
+    Look for error messages, failed API calls, or signature mismatches.
+  </Step>
+</Steps>
+
+## Getting Support
+
+If you can't resolve an issue using this guide:
+
+<CardGroup cols={2}>
+  <Card title="Email Support" icon="envelope" href="mailto:hello@ceypay.io">
+    Contact our support team directly for personalized assistance.
+  </Card>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/ceylabs">
+    Report bugs or request features on our GitHub repository.
+  </Card>
+</CardGroup>
+
+### Information to Include
+
+When contacting support, please provide:
+
+- WordPress version
+- WooCommerce version
+- CeyPay plugin version
+- PHP version
+- Theme name and version
+- Relevant log entries
+- Steps to reproduce the issue
+- Screenshots if applicable
+
+<Tip>
+  You can find version information at **WooCommerce > Status > System Status**.
+</Tip>
