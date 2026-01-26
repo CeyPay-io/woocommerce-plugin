@@ -1,0 +1,153 @@
+---
+title: Quickstart
+description: Get CeyPay WordPress Plugin installed and accepting crypto payments in minutes.
+---
+
+<div style={{ textAlign: 'center', margin: '20px 0' }}>
+  <img src="/images/ceypay-logo.svg" alt="CeyPay" style={{ height: '48px' }} />
+</div>
+
+## Installation
+
+Choose one of the following methods to install the CeyPay Payment Gateway plugin.
+
+<Tabs>
+  <Tab title="WordPress Dashboard">
+    The easiest way to install CeyPay is directly from your WordPress admin panel.
+
+    <Steps>
+      <Step title="Navigate to Plugins">
+        Log in to your WordPress admin dashboard and go to **Plugins > Add New**.
+      </Step>
+      <Step title="Search for CeyPay">
+        In the search box, type "CeyPay Payment Gateway" and press Enter.
+      </Step>
+      <Step title="Install the Plugin">
+        Click **Install Now** on the CeyPay Payment Gateway plugin card.
+      </Step>
+      <Step title="Activate">
+        Once installed, click **Activate** to enable the plugin.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Manual Upload">
+    If you have the plugin ZIP file, you can upload it manually.
+
+    <Steps>
+      <Step title="Download the Plugin">
+        Download the `ceypay-payment-gateway.zip` file from the official source.
+      </Step>
+      <Step title="Upload via Dashboard">
+        Go to **Plugins > Add New** and click **Upload Plugin** at the top.
+      </Step>
+      <Step title="Select and Install">
+        Choose the ZIP file and click **Install Now**.
+      </Step>
+      <Step title="Activate">
+        Click **Activate** after the installation completes.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="FTP/SFTP">
+    For advanced users who prefer manual file management.
+
+    <Steps>
+      <Step title="Extract the Plugin">
+        Extract the `ceypay-payment-gateway.zip` file on your local machine.
+      </Step>
+      <Step title="Connect to Server">
+        Use an FTP/SFTP client to connect to your web server.
+      </Step>
+      <Step title="Upload Files">
+        Upload the `ceypay-payment-gateway` folder to `/wp-content/plugins/`.
+      </Step>
+      <Step title="Activate">
+        Go to **Plugins** in WordPress admin and activate CeyPay Payment Gateway.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Initial Configuration
+
+After activation, you'll see an admin notice prompting you to complete the setup. Follow these steps to configure CeyPay.
+
+<Steps>
+  <Step title="Access Payment Settings">
+    Navigate to **WooCommerce > Settings > Payments** in your WordPress admin.
+  </Step>
+  <Step title="Enable CeyPay">
+    Find **CeyPay** in the list of available payment methods. Toggle the switch to enable it, then click **Manage** or the gateway name.
+  </Step>
+  <Step title="Enter Your Credentials">
+    Fill in the required fields:
+
+    <ParamField path="Merchant ID" type="string" required>
+      Your unique merchant identifier from the CeyPay dashboard.
+    </ParamField>
+
+    <ParamField path="Webhook Secret" type="string" required>
+      The secret key used to verify webhook signatures. Found in your CeyPay dashboard under API settings.
+    </ParamField>
+  </Step>
+  <Step title="Save Changes">
+    Click **Save changes** at the bottom of the page.
+  </Step>
+</Steps>
+
+<Check>
+  Once configured, CeyPay will appear as a payment option on your checkout page.
+</Check>
+
+## Get Your API Credentials
+
+If you don't have your Merchant ID and Webhook Secret yet, follow these steps:
+
+<Steps>
+  <Step title="Create a CeyPay Account">
+    Visit [ceypay.io](https://ceypay.io) and sign up for a merchant account.
+  </Step>
+  <Step title="Complete Verification">
+    Complete the merchant verification process as required.
+  </Step>
+  <Step title="Access API Settings">
+    In your CeyPay dashboard, navigate to the API or Integration settings section.
+  </Step>
+  <Step title="Copy Credentials">
+    Copy your **Merchant ID** and generate a **Webhook Secret** if one hasn't been created.
+  </Step>
+</Steps>
+
+## Verify Your Setup
+
+To confirm CeyPay is working correctly:
+
+<Steps>
+  <Step title="Enable Test Mode">
+    In the CeyPay settings, check **Enable Test Mode**. This allows you to test without real transactions.
+  </Step>
+  <Step title="Place a Test Order">
+    Add a product to your cart and proceed to checkout. Select CeyPay as the payment method.
+  </Step>
+  <Step title="Complete the Flow">
+    After clicking "Place Order", the payment modal should appear. In test mode, you'll see a "Simulate Success" button.
+  </Step>
+  <Step title="Verify Order Status">
+    Click the simulate button and confirm the order is marked as "Processing" or "Completed" in WooCommerce.
+  </Step>
+</Steps>
+
+<Warning>
+  Remember to disable Test Mode before accepting real payments. Test Mode is only visible to administrators.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="sliders" href="/configuration">
+    Explore all available settings and customize the checkout experience.
+  </Card>
+  <Card title="Testing Guide" icon="vial" href="/testing">
+    Learn how to thoroughly test your integration before going live.
+  </Card>
+</CardGroup>
