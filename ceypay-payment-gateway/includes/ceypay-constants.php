@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 // Plugin Version
 if ( ! defined( 'CEYPAY_VERSION' ) ) {
-    define( 'CEYPAY_VERSION', '1.2.3' );
+    define( 'CEYPAY_VERSION', '1.2.4' );
 }
 
 // GA4 Configuration (NOT exposed in admin settings)
