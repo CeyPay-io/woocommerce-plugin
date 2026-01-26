@@ -35,6 +35,17 @@ Accept cryptocurrency payments via Binance Pay, Bybit, and Bitazza on your WooCo
 3. Enter your **Merchant ID** from [CeyPay Dashboard](https://ceypay.io)
 4. Configure your **Webhook Secret** for real-time payment confirmations
 
+## Testing
+
+The plugin includes a Test Mode for testing without real transactions:
+
+1. Enable **Test Mode** in WooCommerce > Settings > Payments > CeyPay
+2. Use the following test credentials:
+   - **API Endpoint:** `sandbox-api.ceypay.io`
+   - **Test Merchant ID:** `289caebb-ed95-465c-a967-68963bdd20de`
+3. Test payments will only be visible to administrators
+4. Use the "Simulate Success" button to complete test transactions
+
 ## Usage
 
 1. Customer selects a provider (Binance/Bybit/Bitazza) at checkout
