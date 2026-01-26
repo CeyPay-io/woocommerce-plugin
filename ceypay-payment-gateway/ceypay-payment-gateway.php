@@ -74,6 +74,16 @@ function ceypay_init_gateway_class() {
 add_action( 'plugins_loaded', 'ceypay_init_gateway_class', 11 );
 
 /**
+ * Declare HPOS (High-Performance Order Storage) compatibility
+ */
+function ceypay_declare_hpos_compatibility() {
+	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+	}
+}
+add_action( 'before_woocommerce_init', 'ceypay_declare_hpos_compatibility' );
+
+/**
  * Register WooCommerce Blocks Support
  */
 function ceypay_register_blocks_support() {
