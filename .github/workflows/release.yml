@@ -89,11 +89,11 @@ jobs:
       - name: Build Plugin ZIP
         run: |
           cd build
-          zip -r ../${{ env.PLUGIN_SLUG }}.zip ${{ env.PLUGIN_SLUG }}/ \
+          zip -r ../${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip ${{ env.PLUGIN_SLUG }}/ \
             -x "*.git*" \
             -x "*/.DS_Store"
           cd ..
-          ls -la ${{ env.PLUGIN_SLUG }}.zip
+          ls -la ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip
 
       - name: Create RC Release
         env:
@@ -118,7 +118,7 @@ jobs:
           EOF
 
           gh release create "$RC_TAG" \
-            ${{ env.PLUGIN_SLUG }}.zip \
+            ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip \
             --title "CeyPay Payment Gateway ${RC_TAG}" \
             --notes-file rc-notes.md \
             --prerelease
@@ -210,7 +210,7 @@ jobs:
         if: steps.check_release.outputs.exists == 'false'
         run: |
           cd build
-          zip -r ../${{ env.PLUGIN_SLUG }}.zip ${{ env.PLUGIN_SLUG }}/ \
+          zip -r ../${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip ${{ env.PLUGIN_SLUG }}/ \
             -x "*.git*" \
             -x "*/.DS_Store"
           cd ..
@@ -244,7 +244,7 @@ jobs:
           EOF
 
           gh release create "v${VERSION}" \
-            ${{ env.PLUGIN_SLUG }}.zip \
+            ${{ env.PLUGIN_SLUG }}-v${VERSION}.zip \
             --title "CeyPay Payment Gateway v${VERSION}" \
             --notes-file release-notes.md \
             --latest

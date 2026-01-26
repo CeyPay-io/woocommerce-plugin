@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - main
+      - dev
 
 permissions:
   contents: write
@@ -25,6 +26,15 @@ jobs:
           VERSION=$(grep -oP "Version:\s*\K[0-9.]+" ${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Plugin version: $VERSION"
+
+      - name: Get Branch Name
+        id: branch
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]')
+          echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "sanitized=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
+          echo "Branch: $BRANCH_NAME (sanitized: $SANITIZED_BRANCH)"
 
       - name: Download Plugin Update Checker
         run: |
@@ -71,32 +81,33 @@ jobs:
       - name: Build Plugin ZIP
         run: |
           cd build
-          zip -r ../${{ env.PLUGIN_SLUG }}.zip ${{ env.PLUGIN_SLUG }}/ \
+          zip -r ../${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}-${{ steps.branch.outputs.sanitized }}.zip ${{ env.PLUGIN_SLUG }}/ \
             -x "*.git*" \
             -x "*/.DS_Store" \
             -x "*/.gitignore"
           cd ..
-          echo "Created ${{ env.PLUGIN_SLUG }}.zip"
-          ls -la ${{ env.PLUGIN_SLUG }}.zip
+          echo "Created ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}-${{ steps.branch.outputs.sanitized }}.zip"
+          ls -la ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}-${{ steps.branch.outputs.sanitized }}.zip
 
       - name: Update Dev Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: dev-build
-          name: "Development Build (v${{ steps.version.outputs.version }}-dev)"
+          tag_name: dev-${{ steps.branch.outputs.sanitized }}
+          name: "Development Build: ${{ steps.branch.outputs.name }} (v${{ steps.version.outputs.version }})"
           body: |
-            ## Development Build
+            ## Development Build: ${{ steps.branch.outputs.name }}
 
-            Automated development build from the `dev` branch.
+            Automated development build from the `${{ steps.branch.outputs.name }}` branch.
 
-            **Version:** ${{ steps.version.outputs.version }}-dev
+            **Version:** ${{ steps.version.outputs.version }}
+            **Branch:** ${{ steps.branch.outputs.name }}
             **Commit:** ${{ github.sha }}
 
             ### Included
             - Plugin Update Checker for GitHub OTA updates
 
             > ⚠️ This is a pre-release build for testing purposes only.
-          files: ${{ env.PLUGIN_SLUG }}.zip
+          files: ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}-${{ steps.branch.outputs.sanitized }}.zip
           prerelease: true
           target_commitish: dev
         env:
