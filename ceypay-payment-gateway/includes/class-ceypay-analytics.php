@@ -243,7 +243,7 @@ class CeyPay_Analytics {
             return;
         }
 
-        wp_enqueue_script( 'ceypay-fb-events', 'https://connect.facebook.net/en_US/fbevents.js', array(), null, false );
+        wp_enqueue_script( 'ceypay-fb-events', 'https://connect.facebook.net/en_US/fbevents.js', array(), CEYPAY_VERSION, false );
 
         // Base Code (Init)
         $init_code = "
