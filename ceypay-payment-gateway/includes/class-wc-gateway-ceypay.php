@@ -40,7 +40,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $this->testmode       = 'yes' === $this->get_option( 'testmode' );
         $this->merchant_id    = $this->get_option( 'merchant_id' );
 
-        $this->api_url        = $this->testmode ? 'https://nisal.ceyl.one/ceypay/mock-api/' : 'https://api.ceypay.io/';
+        $this->api_url        = $this->testmode ? 'https://sandbox.ceypay.io/' : 'https://api.ceypay.io/';
 
         // Actions
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -200,6 +200,10 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $raw_body = wp_remote_retrieve_body( $response );
         $body = json_decode( $raw_body, true );
 
+        if ( json_last_error() !== JSON_ERROR_NONE ) {
+            wp_send_json_error( array( 'message' => 'Invalid JSON response from payment provider.' ) );
+        }
+
         if ( $response_code !== 200 && $response_code !== 201 ) {
              $error_message = 'Payment error. Please try again.';
              if ( isset( $body['message'] ) ) {
@@ -298,7 +302,10 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         // Localize analytics data
         if ( class_exists( 'CeyPay_Analytics' ) ) {
             $analytics = CeyPay_Analytics::get_instance();
-            wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $analytics->get_frontend_tracking_data() );
+            // $data = $analytics->get_frontend_tracking_data(); // Ensure this returns sanitized data if used
+            // wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $data );
+            // Re-enabling with strict checking assumption in class
+             wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $analytics->get_frontend_tracking_data() );
         }
 
         wp_enqueue_script( 'ceypay-checkout', plugins_url( '../assets/js/ceypay-checkout.js?v=' . CEYPAY_VERSION, __FILE__ ), array( 'jquery', 'ceypay-analytics' ), CEYPAY_VERSION, true );
@@ -382,7 +389,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
 
             echo '<div class="ceypay-payment-instructions" style="text-align:center; margin: 20px 0; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9;">';
             /* translators: %s: Payment provider name (e.g., Binance, Bybit) */
-            echo '<h2>' . esc_html( sprintf( __( 'Pay with %s', 'ceypay-payment-gateway' ), $provider ) ) . '</h2>';
+            echo '<h2>' . sprintf( esc_html__( 'Pay with %s', 'ceypay-payment-gateway' ), esc_html( $provider ) ) . '</h2>';
             echo '<p>' . esc_html__( 'Please scan the QR code below to complete your payment.', 'ceypay-payment-gateway' ) . '</p>';
             echo '<div style="background: white; padding: 10px; display: inline-block; border: 1px solid #ddd; border-radius: 4px;">';
             echo '<img src="' . esc_url( $qr_code_url ) . '" alt="Payment QR Code" style="max-width: 250px; display: block;"/>';
@@ -394,7 +401,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
 
             if ( $deep_link ) {
                 /* translators: %s: Payment provider name (e.g., Binance, Bybit) */
-                echo '<p><a href="' . esc_url( $deep_link ) . '" class="button alt" target="_blank" style="margin-top: 10px;">' . esc_html( sprintf( __( 'Open %s App', 'ceypay-payment-gateway' ), $provider ) ) . '</a></p>';
+                echo '<p><a href="' . esc_url( $deep_link ) . '" class="button alt" target="_blank" style="margin-top: 10px;">' . sprintf( esc_html__( 'Open %s App', 'ceypay-payment-gateway' ), esc_html( $provider ) ) . '</a></p>';
             }
 
             echo '</div>';
@@ -638,7 +645,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $payload = json_decode( $payload_json, true );
 
         // Logging
-        $this->log( 'Webhook received: ' . $payload_json );
+        // $this->log( 'Webhook received: ' . $payload_json ); // Disabled raw logging for security
 
         // Get signature and timestamp from headers
         $signature = '';
@@ -717,7 +724,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         if ( $transaction_id_raw ) {
             $webhook_id = 'ceypay_webhook_' . md5( $transaction_id_raw . $timestamp );
             if ( get_transient( $webhook_id ) ) {
-                $this->log( 'Duplicate webhook detected and ignored: ' . $transaction_id_raw );
+                $this->log( 'Duplicate webhook detected and ignored: ' . sanitize_text_field( $transaction_id_raw ) );
                 status_header( 200 );
                 exit;
             }
@@ -875,6 +882,8 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
      * Send debug message to Telegram
      */
     public function send_telegram_debug( $title, $data = array() ) {
+        return; // Disabled for production
+        /*
         $message = "<b>" . esc_html( $title ) . "</b>\n\n";
 
         if ( ! empty( $data ) ) {
@@ -889,6 +898,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
             'timeout' => 5,
             'blocking' => false // Non-blocking to avoid slowing down the process
         ) );
+        */
     }
 
     /**

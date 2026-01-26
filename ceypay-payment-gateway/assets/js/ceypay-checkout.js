@@ -349,11 +349,9 @@ jQuery(document).ready(function($) {
 
         if (autoRefreshAttempts <= maxAutoRefresh) {
             // Auto-refresh
-            console.log('Auto-refreshing QR code (attempt ' + autoRefreshAttempts + '/' + maxAutoRefresh + ')');
             refreshQrCode(data, true);
         } else {
             // Max auto-refresh reached, show manual button
-            console.log('Max auto-refresh attempts reached, showing manual refresh button');
             showManualRefreshButton(data);
         }
     }

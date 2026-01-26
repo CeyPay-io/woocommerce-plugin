@@ -1,10 +1,10 @@
 === CeyPay Payment Gateway ===
-Contributors: CeyPay
+Contributors: ceypay
 Tags: woocommerce, payment gateway, crypto, bybit pay, binance pay
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.2.4
+Stable tag: 1.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,7 +41,7 @@ The plugin features a polished, responsive checkout modal that keeps customers o
 4.  Click **Install Now** and then **Activate**.
 5.  Navigate to **WooCommerce > Settings > Payments**.
 6.  Enable **CeyPay** and click **Manage**.
-7.  Enter your **Merchant ID** and **Webhook Secret** (provided by CeyPay).
+7.  Enter your **Merchant ID** (provided by CeyPay).
 8.  (Optional) Enable **Test Mode** for development.
 
 == Frequently Asked Questions ==
