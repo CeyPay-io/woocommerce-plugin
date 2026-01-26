@@ -99,7 +99,7 @@ class CeyPay_Analytics {
             'ceypay-gtag',
             'https://www.googletagmanager.com/gtag/js?id=' . esc_attr( $measurement_id ),
             array(),
-            null,
+            CEYPAY_VERSION,
             false // Load in header for analytics
         );
 
@@ -269,7 +269,7 @@ class CeyPay_Analytics {
 
     /**
      * Output Facebook Pixel Base Code
-     * 
+     *
      * @param string $pixel_id Facebook Pixel ID
      */
     private function enqueue_fb_pixel_base( $pixel_id ) {
