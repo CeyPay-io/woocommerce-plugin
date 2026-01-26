@@ -38,6 +38,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $this->description    = __( 'Pay securely with CeyPay using digital currency balance on your favorite CEX.', 'ceypay-payment-gateway' );
         $this->enabled        = $this->get_option( 'enabled' );
         $this->testmode       = 'yes' === $this->get_option( 'testmode' );
+
+        // Add test mode badge to title if in test mode
+        if ( $this->testmode ) {
+            $this->method_title .= ' (Test Mode)';
+        }
         $this->merchant_id    = $this->testmode ? '289caebb-ed95-465c-a967-68963bdd20de' : $this->get_option( 'merchant_id' );
 
         $this->api_url        = $this->testmode ? 'https://sandbox-api.ceypay.io/' : 'https://api.ceypay.io/';
@@ -76,6 +81,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         if ( $gateway_id === $this->id && is_checkout() ) {
             $blue_pill_url = plugins_url( '../assets/images/ceypay-pill-bybit.png', __FILE__ );
             $icon = '<img src="' . esc_url( $blue_pill_url ) . '" alt="' . esc_attr( $this->get_title() ) . '" style="width: 100px; height: auto;" />';
+
+            // Add test mode badge on checkout
+            if ( $this->testmode ) {
+                $icon .= ' <span class="ceypay-testmode-badge ceypay-testmode-badge--checkout">Sandbox</span>';
+            }
         }
         return $icon;
     }

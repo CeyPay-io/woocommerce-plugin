@@ -1,4 +1,4 @@
-      
+
 /*
    CeyPay Payment Gateway Styles
    Modern List Layout - Clean & Professional
@@ -16,6 +16,39 @@
     --ceypay-hover: #F8FAFC;
     --ceypay-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --ceypay-radius: 20px;
+    --ceypay-testmode: #f59e0b;
+}
+
+/* --- Test Mode Badge --- */
+.ceypay-testmode-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--ceypay-testmode);
+    color: white;
+    border-radius: 6px;
+    vertical-align: middle;
+    margin-left: 8px;
+    line-height: 1.2;
+}
+
+.ceypay-testmode-badge--checkout {
+    font-size: 10px;
+    padding: 3px 8px;
+    margin-left: 6px;
+}
+
+.ceypay-testmode-badge--modal {
+    position: absolute;
+    top: 50%;
+    right: 70px;
+    transform: translateY(-50%);
+    font-size: 10px;
+    padding: 4px 8px;
+    margin: 0;
 }
 
 /* --- Modal Core --- */
@@ -188,6 +221,7 @@
     padding: 20px 24px;
     flex-shrink: 0;
     border-bottom: 1px solid var(--ceypay-border);
+    position: relative; /* Ensure absolute children are positioned relative to header */
 }
 
 .ceypay-back-btn {
@@ -241,8 +275,20 @@
 }
 
 /* Hide help button when back button is visible (QR page) */
-.ceypay-back-btn:not([style*="display: none"]) ~ .ceypay-modal__title ~ .ceypay-help-btn {
+.ceypay-back-btn:not([style*="display: none"]) ~ .ceypay-header-center ~ .ceypay-help-btn {
     display: none !important;
+}
+
+.ceypay-header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: fit-content;
+    justify-self: center;
+    grid-column: 2;
+    grid-row: 1;
+    z-index: 5;
 }
 
 .ceypay-modal__title {
@@ -252,8 +298,22 @@
     margin: 0;
     line-height: 1.2;
     text-align: center;
-    grid-column: 2;
-    grid-row: 1;
+}
+
+.ceypay-testmode-badge--modal {
+    position: absolute;
+    left: 100%;
+    top: -5px;
+    margin-left: 0;
+    font-size: 8px; /* Slightly smaller font to fit better */
+    font-weight: 700;
+    padding: 4px 6px; /* Increased padding for better breathing room */
+    border-radius: 4px;
+    line-height: 1;
+    white-space: nowrap;
+    width: max-content;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Subtle depth */
 }
 
 /* Hide old pill style */
@@ -269,6 +329,26 @@
     line-height: 1.3;
     text-align: center;
     font-weight: 400;
+}
+
+.ceypay-alert-box {
+    margin: 0 24px 4px 24px; /* Reduced bottom margin */
+    padding: 8px 12px;
+    background-color: #fff7ed; /* Orange 50 */
+    border: 1px solid rgba(249, 115, 22, 0.2); /* Subtle orange border */
+    border-radius: 6px;
+    color: #c2410c; /* Orange 700 */
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.ceypay-alert-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 600;
 }
 
 .ceypay-error-message {
@@ -434,7 +514,7 @@
     align-items: stretch;
     gap: 12px;
     width: 100%;
-    padding-top: 20px;
+    padding-top: 12px; /* Reduced top padding */
     padding-bottom: 20px;
 }
 
