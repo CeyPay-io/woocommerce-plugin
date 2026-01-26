@@ -48,7 +48,7 @@ The plugin includes a Test Mode for testing without real transactions:
 
 ## Usage
 
-1. Customer selects a provider (Bybit/Binance/Bitazza) at checkout
+1. Customer selects a provider (Bybit/Binance/KuCoin/Bitazza) at checkout
 2. Modal opens with QR code or deep-link button for mobile
 3. Plugin polls API and listens to webhooks for payment confirmation
 4. Order is automatically marked as paid when confirmed
