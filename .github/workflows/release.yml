@@ -1,6 +1,8 @@
 name: Release
 
 on:
+  push:
+    branches: [dev]
   pull_request:
     types: [opened, synchronize, closed]
     branches: [dev, main]
@@ -14,6 +16,115 @@ env:
   PUC_VERSION: '5.4'
 
 jobs:
+  # RC Release - when pushed to dev branch
+  rc-release-push:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Get Version from Plugin File
+        id: version
+        run: |
+          VERSION=$(grep -oP "Version:\s*\K[0-9.]+" ${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Plugin version: $VERSION"
+
+      - name: Determine RC Number
+        id: rc
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          RC_NUMBER=1
+
+          while gh release view "v${VERSION}-rc.${RC_NUMBER}" &>/dev/null 2>&1; do
+            RC_NUMBER=$((RC_NUMBER + 1))
+          done
+
+          echo "rc_number=$RC_NUMBER" >> $GITHUB_OUTPUT
+          echo "rc_tag=v${VERSION}-rc.${RC_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Next RC: v${VERSION}-rc.${RC_NUMBER}"
+
+      - name: Download Plugin Update Checker
+        run: |
+          curl -L "https://github.com/YahnisElsts/plugin-update-checker/archive/refs/tags/v${{ env.PUC_VERSION }}.zip" -o puc.zip
+          unzip -q puc.zip
+          mkdir -p build/${{ env.PLUGIN_SLUG }}
+          cp -r ${{ env.PLUGIN_SLUG }}/* build/${{ env.PLUGIN_SLUG }}/
+          mv plugin-update-checker-${{ env.PUC_VERSION }} build/${{ env.PLUGIN_SLUG }}/plugin-update-checker
+
+      - name: Inject Update Checker Code
+        run: |
+          MAIN_FILE="build/${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php"
+
+          cat > /tmp/puc-code.php << 'PUCCODE'
+
+          /**
+          * Plugin Update Checker - GitHub Updates
+          * Enables automatic updates from GitHub releases
+          */
+          if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
+              require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
+
+              $ceypay_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+                  'https://github.com/CeyPay-io/woocommerce-plugin/',
+                  __FILE__,
+                  'ceypay-payment-gateway'
+              );
+
+              $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+          }
+          PUCCODE
+
+          INSERT_LINE=$(grep -n "exit;" "$MAIN_FILE" | head -1 | cut -d: -f1)
+          INSERT_LINE=$((INSERT_LINE + 1))
+
+          head -n $INSERT_LINE "$MAIN_FILE" > /tmp/new-plugin.php
+          cat /tmp/puc-code.php >> /tmp/new-plugin.php
+          tail -n +$((INSERT_LINE + 1)) "$MAIN_FILE" >> /tmp/new-plugin.php
+          mv /tmp/new-plugin.php "$MAIN_FILE"
+
+      - name: Build Plugin ZIP
+        run: |
+          cd build
+          zip -r ../${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip ${{ env.PLUGIN_SLUG }}/ \
+            -x "*.git*" \
+            -x "*/.DS_Store"
+          cd ..
+          ls -la ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip
+
+      - name: Create RC Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          RC_TAG="${{ steps.rc.outputs.rc_tag }}"
+
+          cat > rc-notes.md << EOF
+          ## Release Candidate: CeyPay Payment Gateway v${VERSION}
+
+          This is a **release candidate** for testing before stable release.
+
+          **RC Tag:** \`${RC_TAG}\`
+          **Commit:** ${{ github.sha }}
+
+          ### Testing
+          Download and test this release candidate.
+
+          ---
+          *Pre-release. For production, wait for stable release.*
+          EOF
+
+          gh release create "$RC_TAG" \
+            ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip \
+            --title "CeyPay Payment Gateway ${RC_TAG}" \
+            --notes-file rc-notes.md \
+            --prerelease
+
+          echo "Created RC release: $RC_TAG"
+
   # RC Release - when PR is opened or updated
   rc-release:
     if: github.event.pull_request.merged == false && github.event.action != 'closed' && github.event.pull_request.base.ref == 'dev'
