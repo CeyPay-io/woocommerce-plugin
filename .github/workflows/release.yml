@@ -86,6 +86,12 @@ jobs:
           tail -n +$((INSERT_LINE + 1)) "$MAIN_FILE" >> /tmp/new-plugin.php
           mv /tmp/new-plugin.php "$MAIN_FILE"
 
+      - name: Enable Analytics by Default for Release
+        run: |
+          GATEWAY_FILE="build/${{ env.PLUGIN_SLUG }}/includes/class-wc-gateway-ceypay.php"
+          sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
+          echo "Analytics enabled by default for release build"
+
       - name: Build Plugin ZIP
         run: |
           cd build
@@ -196,6 +202,12 @@ jobs:
           cat /tmp/puc-code.php >> /tmp/new-plugin.php
           tail -n +$((INSERT_LINE + 1)) "$MAIN_FILE" >> /tmp/new-plugin.php
           mv /tmp/new-plugin.php "$MAIN_FILE"
+
+      - name: Enable Analytics by Default for Release
+        run: |
+          GATEWAY_FILE="build/${{ env.PLUGIN_SLUG }}/includes/class-wc-gateway-ceypay.php"
+          sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
+          echo "Analytics enabled by default for release build"
 
       - name: Build Plugin ZIP
         run: |
@@ -316,6 +328,13 @@ jobs:
           cat /tmp/puc-code.php >> /tmp/new-plugin.php
           tail -n +$((INSERT_LINE + 1)) "$MAIN_FILE" >> /tmp/new-plugin.php
           mv /tmp/new-plugin.php "$MAIN_FILE"
+
+      - name: Enable Analytics by Default for Release
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          GATEWAY_FILE="build/${{ env.PLUGIN_SLUG }}/includes/class-wc-gateway-ceypay.php"
+          sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
+          echo "Analytics enabled by default for release build"
 
       - name: Build Plugin ZIP
         if: steps.check_release.outputs.exists == 'false'

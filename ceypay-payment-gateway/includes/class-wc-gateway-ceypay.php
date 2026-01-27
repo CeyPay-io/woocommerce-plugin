@@ -288,7 +288,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
                 'type'        => 'checkbox',
                 'label'       => __( 'Enable usage analytics', 'ceypay-payment-gateway' ),
                 'description' => __( 'Help improve CeyPay by sharing anonymous payment flow data (e.g., provider selection, QR interactions, completion rates). No personal information, transaction amounts, or customer data is collected. Data is sent to Google Analytics.', 'ceypay-payment-gateway' ),
-                'default'     => 'no',
+                'default'     => 'no',  // analytics
                 'desc_tip'    => false,
             ),
         );
