@@ -11,14 +11,46 @@
 
     var CeyPayLabel = function( props ) {
         var iconSrc = settings.icons ? settings.icons.src : '';
-        return el( 'span', { style: { display: 'flex', alignItems: 'center' } }, 
-            iconSrc ? el( 'img', { 
-                src: iconSrc, 
-                alt: 'CeyPay', 
-                style: { marginRight: '10px', height: '24px', verticalAlign: 'middle' } 
-            } ) : null,
-            settings.title || 'CeyPay'
-        );
+        var children = [];
+
+        if ( iconSrc ) {
+            children.push( el( 'img', {
+                src: iconSrc,
+                alt: 'CeyPay',
+                style: { marginRight: '10px', height: '24px', verticalAlign: 'middle' }
+            } ) );
+        }
+
+        children.push( el( 'span', {
+            style: { fontWeight: 600, display: 'inline-flex', alignItems: 'center' }
+        }, settings.title || 'CeyPay' ) );
+
+        if ( settings.testmode ) {
+            children.push( el( 'span', {
+                className: 'ceypay-testmode-badge ceypay-testmode-badge--checkout',
+                style: { marginLeft: '8px', fontSize: '10px', letterSpacing: '0.3px' }
+            }, [
+                el( 'svg', {
+                    className: 'ceypay-sandbox-icon',
+                    width: '12',
+                    height: '12',
+                    viewBox: '0 0 24 24',
+                    fill: 'none',
+                    stroke: 'currentColor',
+                    strokeWidth: '2',
+                    strokeLinecap: 'round',
+                    strokeLinejoin: 'round',
+                    style: { marginRight: '4px' }
+                }, [
+                    el( 'rect', { key: 'rect', x: '3', y: '3', width: '18', height: '18', rx: '2', ry: '2' } ),
+                    el( 'line', { key: 'line1', x1: '3', y1: '9', x2: '21', y2: '9' } ),
+                    el( 'line', { key: 'line2', x1: '9', y1: '21', x2: '9', y2: '9' } )
+                ] ),
+                'Sandbox'
+            ] ) );
+        }
+
+        return el( 'span', { style: { display: 'flex', alignItems: 'center' } }, children );
     };
 
     var CeyPayContent = function( props ) {

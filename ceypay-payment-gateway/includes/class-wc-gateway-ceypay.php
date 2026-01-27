@@ -55,6 +55,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
 
         // Filters
         add_filter( 'woocommerce_gateway_icon', array( $this, 'custom_gateway_icon' ), 10, 2 );
+        add_filter( 'woocommerce_gateway_title', array( $this, 'custom_gateway_title' ), 10, 2 );
 
         // Register AJAX hooks
         $this->register_ajax_hooks();
@@ -81,13 +82,22 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         if ( $gateway_id === $this->id && is_checkout() ) {
             $blue_pill_url = plugins_url( '../assets/images/ceypay-pill-bybit.png', __FILE__ );
             $icon = '<img src="' . esc_url( $blue_pill_url ) . '" alt="' . esc_attr( $this->get_title() ) . '" style="width: 100px; height: auto;" />';
-
-            // Add test mode badge on checkout
-            if ( $this->testmode ) {
-                $icon .= ' <span class="ceypay-testmode-badge ceypay-testmode-badge--checkout">Sandbox</span>';
-            }
         }
         return $icon;
+    }
+
+    /**
+     * Custom gateway title for checkout page
+     *
+     * @param string $title gateway title
+     * @param string $gateway_id The gateway ID
+     * @return string Modified title HTML
+     */
+    public function custom_gateway_title( $title, $gateway_id ) {
+        if ( $gateway_id === $this->id && is_checkout() && $this->testmode ) {
+            $title .= ' <span class="ceypay-testmode-badge ceypay-testmode-badge--checkout"><svg class="ceypay-sandbox-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>Sandbox</span>';
+        }
+        return $title;
     }
 
     /**
