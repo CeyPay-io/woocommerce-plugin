@@ -62,30 +62,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
     }
 
     /**
-     * Enqueue styles and scripts for checkout page
-     * Scripts must load globally to support hash-based modal opening after redirect
+     * Enqueue styles for checkout page
      */
     public function enqueue_checkout_styles() {
-        if ( is_checkout() || is_cart() || is_order_received_page() ) {
-            // Enqueue styles
+        if ( is_checkout() || is_cart() ) {
             wp_enqueue_style( 'ceypay-css', plugins_url( '../assets/css/ceypay.css', __FILE__ ), array(), CEYPAY_VERSION );
-
-            // Enqueue analytics script first (dependency for checkout script)
-            wp_enqueue_script( 'ceypay-analytics', plugins_url( '../assets/js/ceypay-analytics.js', __FILE__ ), array(), CEYPAY_VERSION, true );
-
-            // Localize analytics data
-            if ( class_exists( 'CeyPay_Analytics' ) ) {
-                $analytics = CeyPay_Analytics::get_instance();
-                wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $analytics->get_frontend_tracking_data() );
-            }
-
-            // Enqueue checkout script (contains modal logic and hash detection)
-            wp_enqueue_script( 'ceypay-checkout', plugins_url( '../assets/js/ceypay-checkout.js', __FILE__ ), array( 'jquery', 'ceypay-analytics' ), CEYPAY_VERSION, true );
-            wp_localize_script( 'ceypay-checkout', 'ceypay_params', array(
-                'ajax_url'   => admin_url( 'admin-ajax.php' ),
-                'nonce'      => wp_create_nonce( 'ceypay_status_check' ),
-                'assets_url' => plugins_url( '../assets/', __FILE__ ),
-            ) );
         }
     }
 
@@ -332,8 +313,27 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
             echo wp_kses_post( wpautop( $this->description ) );
         }
 
-        // Scripts are now enqueued globally in enqueue_checkout_styles()
-        // This ensures they load on checkout page after redirect with hash
+        // Enqueue styles and scripts
+        wp_enqueue_style( 'ceypay-css', plugins_url( '../assets/css/ceypay.css?v=' . CEYPAY_VERSION, __FILE__ ), array(), CEYPAY_VERSION );
+
+        // Enqueue analytics script BEFORE checkout script (dependency)
+        wp_enqueue_script( 'ceypay-analytics', plugins_url( '../assets/js/ceypay-analytics.js?v=' . CEYPAY_VERSION, __FILE__ ), array(), CEYPAY_VERSION, true );
+
+        // Localize analytics data
+        if ( class_exists( 'CeyPay_Analytics' ) ) {
+            $analytics = CeyPay_Analytics::get_instance();
+            // $data = $analytics->get_frontend_tracking_data(); // Ensure this returns sanitized data if used
+            // wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $data );
+            // Re-enabling with strict checking assumption in class
+             wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $analytics->get_frontend_tracking_data() );
+        }
+
+        wp_enqueue_script( 'ceypay-checkout', plugins_url( '../assets/js/ceypay-checkout.js?v=' . CEYPAY_VERSION, __FILE__ ), array( 'jquery', 'ceypay-analytics' ), CEYPAY_VERSION, true );
+        wp_localize_script( 'ceypay-checkout', 'ceypay_params', array(
+            'ajax_url'   => admin_url( 'admin-ajax.php' ),
+            'nonce'      => wp_create_nonce( 'ceypay_status_check' ),
+            'assets_url' => plugins_url( '../assets/', __FILE__ ),
+        ) );
 
         echo '<fieldset id="wc-' . esc_attr( $this->id ) . '-cc-form" class="wc-credit-card-form wc-payment-form" style="background:transparent;">';
         // Provider selection moved to modal
@@ -361,21 +361,20 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         // Update status to PENDING
         $order->update_status( 'pending', __( 'Awaiting CeyPay payment provider selection.', 'ceypay-payment-gateway' ) );
 
-        // Prepare data for modal
+        // Prepare data for Modal (Initial State: No QR yet)
         $modal_data = array(
-            'order_id'    => $order_id,
-            'amount'      => $order->get_total(),
-            'currency'    => $order->get_currency(),
-            'success_url' => $this->get_return_url( $order ),
-            'test_mode'   => $this->testmode,
-            'step'        => 'select_provider',
+            'order_id'       => $order_id,
+            'amount'         => $order->get_total(),
+            'currency'       => $order->get_currency(),
+            'success_url'    => $this->get_return_url( $order ),
+            'test_mode'      => $this->testmode,
+            'step'           => 'select_provider' // New flag to indicate selection step
         );
 
-        $hash_payload = base64_encode( wp_json_encode( $modal_data ) );
+        // Encode data for hash
+        $hash_payload = base64_encode( json_encode( $modal_data ) );
 
-        // Redirect back to checkout with hash to trigger modal
-        // WooCommerce AJAX checkout sets window.location which only changes the hash (no full reload)
-        // so scripts already loaded via enqueue_checkout_styles() remain available
+        // Return hash redirect to trigger modal
         return array(
             'result'   => 'success',
             'redirect' => wc_get_checkout_url() . '#ceypay_modal=' . $hash_payload,
@@ -386,7 +385,47 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
      * Output for the receipt page.
      */
     public function receipt_page( $order_id ) {
-        // Payment UI is handled entirely by the modal (ceypay-checkout.js)
+        // Fallback for direct access or if modal fails
+        $order = wc_get_order( $order_id );
+
+        $qr_code_url = $order->get_meta( '_ceypay_qr_code_url' );
+        $deep_link = $order->get_meta( '_ceypay_deep_link' );
+        $provider = $order->get_meta( '_ceypay_provider' );
+        $transaction_id = $order->get_meta( '_ceypay_transaction_id' );
+
+        if ( $qr_code_url ) {
+            // Enqueue polling script (reusing the checkout script logic if needed, but here we use the old one for fallback)
+            // Actually, let's just output the same structure as before for fallback.
+
+            wp_enqueue_script( 'ceypay-poll', plugins_url( '../assets/js/ceypay-poll.js', __FILE__ ), array( 'jquery' ), CEYPAY_VERSION, true );
+            wp_localize_script( 'ceypay-poll', 'ceypay_params', array(
+                'ajax_url'       => admin_url( 'admin-ajax.php' ),
+                'nonce'          => wp_create_nonce( 'ceypay_status_check' ),
+                'transaction_id' => $transaction_id,
+                'order_id'       => $order_id,
+                'success_url'    => $this->get_return_url( $order ),
+                'status_url'     => trailingslashit( $this->api_url ) . 'payment/' . $transaction_id,
+            ) );
+
+            echo '<div class="ceypay-payment-instructions" style="text-align:center; margin: 20px 0; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9;">';
+            /* translators: %s: Payment provider name (e.g., Binance, Bybit) */
+            echo '<h2>' . sprintf( esc_html__( 'Pay with %s', 'ceypay-payment-gateway' ), esc_html( $provider ) ) . '</h2>';
+            echo '<p>' . esc_html__( 'Please scan the QR code below to complete your payment.', 'ceypay-payment-gateway' ) . '</p>';
+            echo '<div style="background: white; padding: 10px; display: inline-block; border: 1px solid #ddd; border-radius: 4px;">';
+            echo '<img src="' . esc_url( $qr_code_url ) . '" alt="Payment QR Code" style="max-width: 250px; display: block;"/>';
+            echo '</div>';
+
+            echo '<div style="margin-top: 20px;">';
+            echo '<p class="ceypay-status-text" style="font-weight: bold; color: #666;">' . esc_html__( 'Waiting for payment...', 'ceypay-payment-gateway' ) . ' <span class="spinner is-active" style="float:none; margin: 0 0 -3px 5px;"></span></p>';
+            echo '</div>';
+
+            if ( $deep_link ) {
+                /* translators: %s: Payment provider name (e.g., Binance, Bybit) */
+                echo '<p><a href="' . esc_url( $deep_link ) . '" class="button alt" target="_blank" style="margin-top: 10px;">' . sprintf( esc_html__( 'Open %s App', 'ceypay-payment-gateway' ), esc_html( $provider ) ) . '</a></p>';
+            }
+
+            echo '</div>';
+        }
     }
 
     /**
