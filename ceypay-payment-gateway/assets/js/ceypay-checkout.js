@@ -400,7 +400,7 @@ jQuery(document).ready(function($) {
         history.replaceState(null, document.title, window.location.pathname + window.location.search);
 
         // Reload the page to reset the Block Checkout state (removes the "Tick" and restores the form)
-        safeReload();
+        window.location.reload();
     }
 
     $(document).on('click', '.ceypay-modal__close', closeModal);
@@ -426,36 +426,12 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Intercept WooCommerce checkout AJAX response to open modal directly
-    // This prevents page redirect issues (empty cart, theme redirects, etc.)
-    $.ajaxPrefilter(function(options, originalOptions, jqXHR) {
-        if (options.url && options.url.indexOf('wc-ajax=checkout') !== -1) {
-            var originalSuccess = options.success;
-            options.success = function(result) {
-                if (result && result.result === 'success' && result.redirect &&
-                    result.redirect.indexOf('#ceypay_modal=') !== -1) {
-                    // Extract modal data from redirect URL and open modal directly
-                    var hash = result.redirect.split('#ceypay_modal=')[1];
-                    try {
-                        var data = JSON.parse(atob(hash));
-                        openPaymentModal(data);
-                        return; // Don't redirect
-                    } catch (e) {
-                        // Fallback to default redirect if parsing fails
-                        if (originalSuccess) originalSuccess(result);
-                    }
-                } else {
-                    // Not a CeyPay response, let WooCommerce handle normally
-                    if (originalSuccess) originalSuccess(result);
-                }
-            };
-        }
-    });
-
-    // Fallback: Listen for hash change (e.g., direct URL access, Blocks checkout)
+    // Listen for Hash Change (triggered by WooCommerce redirect to #ceypay_modal=...)
     $(window).on('hashchange', function() {
         checkHashForPayment();
     });
+
+    // Check on load too (in case of refresh with hash)
     checkHashForPayment();
 
     function checkHashForPayment() {
@@ -465,9 +441,37 @@ jQuery(document).ready(function($) {
             try {
                 var jsonStr = atob(base64Data);
                 var data = JSON.parse(jsonStr);
-                // Clear hash so it doesn't re-trigger on refresh
-                clearHash();
-                openPaymentModal(data);
+
+                // Check if order is already completed before opening modal
+                if (data.order_id) {
+                    $.ajax({
+                        url: ceypay_params.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'ceypay_check_order_status',
+                            order_id: data.order_id,
+                            security: ceypay_params.nonce
+                        },
+                        success: function(response) {
+                            if (response.success && response.data.is_paid) {
+                                // Order already paid, clear hash and redirect to success
+                                clearHash();
+                                if (data.success_url) {
+                                    window.location.href = data.success_url;
+                                }
+                            } else {
+                                // Order not paid, open the modal
+                                openPaymentModal(data);
+                            }
+                        },
+                        error: function() {
+                            // On error, still open modal (let it handle the state)
+                            openPaymentModal(data);
+                        }
+                    });
+                } else {
+                    openPaymentModal(data);
+                }
             } catch (e) {
                 console.error('Error decoding CeyPay data', e);
             }
@@ -476,37 +480,6 @@ jQuery(document).ready(function($) {
 
     function clearHash() {
         history.replaceState(null, document.title, window.location.pathname + window.location.search);
-    }
-
-    // Safe redirect without "Leave site?" warning
-    function safeRedirect(url) {
-        // Remove jQuery beforeunload handlers
-        $(window).off('beforeunload');
-
-        // Override native handler to prevent dialog
-        window.onbeforeunload = null;
-
-        // Intercept beforeunload event to prevent any dialog
-        window.addEventListener('beforeunload', function(e) {
-            e.stopImmediatePropagation();
-            delete e.returnValue;
-        }, true);
-
-        // Use replace to navigate (doesn't add history entry)
-        window.location.replace(url);
-    }
-
-    // Safe reload without "Leave site?" warning
-    function safeReload() {
-        $(window).off('beforeunload');
-        window.onbeforeunload = null;
-
-        window.addEventListener('beforeunload', function(e) {
-            e.stopImmediatePropagation();
-            delete e.returnValue;
-        }, true);
-
-        window.location.reload();
     }
 
     function openPaymentModal(data) {
@@ -799,7 +772,7 @@ jQuery(document).ready(function($) {
 
                             renderSuccess();
                             setTimeout(function() {
-                                safeRedirect(data.success_url);
+                                window.location.href = data.success_url;
                             }, 400);
                         } else if (response.data.status === 'USER_REVIEW') {
                             // Update status message to show user review state
@@ -831,7 +804,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     renderSuccess();
                     setTimeout(function() {
-                        safeRedirect(data.success_url);
+                        window.location.href = data.success_url;
                     }, 400);
                 } else {
                     alert('Simulation failed: ' + response.data.message);
