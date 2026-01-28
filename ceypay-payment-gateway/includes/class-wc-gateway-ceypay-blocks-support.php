@@ -58,6 +58,7 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
     public function get_payment_method_data() {
         return [
             'title'       => isset($this->settings['title']) ? $this->settings['title'] : 'CeyPay',
+            'testmode'    => isset($this->settings['testmode']) && 'yes' === $this->settings['testmode'],
             'description' => __( 'Pay securely with CeyPay using digital currency balance on your favorite CEX.', 'ceypay-payment-gateway' ),
             'supports'    => $this->get_supported_features(),
             'icons'       => [
