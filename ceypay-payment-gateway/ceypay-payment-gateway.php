@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: CeyPay Payment Gateway
- * Plugin URI:  https://docs.ceypay.io/
+ * Plugin URI:  https://docs.ceypay.io/wordpress
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.2.7
+ * Version:     1.2.8
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
