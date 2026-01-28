@@ -480,15 +480,19 @@ jQuery(document).ready(function($) {
 
     // Safe redirect without "Leave site?" warning
     function safeRedirect(url) {
-        // Remove all beforeunload handlers
+        // Remove jQuery beforeunload handlers
         $(window).off('beforeunload');
+
+        // Override native handler to prevent dialog
         window.onbeforeunload = null;
 
-        // Clone window to break event listener references (Blocks checkout workaround)
-        var handlers = window.onbeforeunload;
-        window.onbeforeunload = function() { return undefined; };
+        // Intercept beforeunload event to prevent any dialog
+        window.addEventListener('beforeunload', function(e) {
+            e.stopImmediatePropagation();
+            delete e.returnValue;
+        }, true);
 
-        // Force allow navigation
+        // Use replace to navigate (doesn't add history entry)
         window.location.replace(url);
     }
 
@@ -496,7 +500,12 @@ jQuery(document).ready(function($) {
     function safeReload() {
         $(window).off('beforeunload');
         window.onbeforeunload = null;
-        window.onbeforeunload = function() { return undefined; };
+
+        window.addEventListener('beforeunload', function(e) {
+            e.stopImmediatePropagation();
+            delete e.returnValue;
+        }, true);
+
         window.location.reload();
     }
 
@@ -790,10 +799,7 @@ jQuery(document).ready(function($) {
 
                             renderSuccess();
                             setTimeout(function() {
-                                // Remove beforeunload warning before redirect
-                                $(window).off('beforeunload');
-                                window.onbeforeunload = null;
-                                window.location.href = data.success_url;
+                                safeRedirect(data.success_url);
                             }, 400);
                         } else if (response.data.status === 'USER_REVIEW') {
                             // Update status message to show user review state
@@ -825,10 +831,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     renderSuccess();
                     setTimeout(function() {
-                        // Remove beforeunload warning before redirect
-                        $(window).off('beforeunload');
-                        window.onbeforeunload = null;
-                        window.location.href = data.success_url;
+                        safeRedirect(data.success_url);
                     }, 400);
                 } else {
                     alert('Simulation failed: ' + response.data.message);
