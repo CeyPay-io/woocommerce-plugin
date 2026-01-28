@@ -482,6 +482,28 @@ jQuery(document).ready(function($) {
         history.replaceState(null, document.title, window.location.pathname + window.location.search);
     }
 
+    // Safe redirect without "Leave site?" warning
+    function safeRedirect(url) {
+        // Remove all beforeunload handlers
+        $(window).off('beforeunload');
+        window.onbeforeunload = null;
+
+        // Clone window to break event listener references (Blocks checkout workaround)
+        var handlers = window.onbeforeunload;
+        window.onbeforeunload = function() { return undefined; };
+
+        // Force allow navigation
+        window.location.replace(url);
+    }
+
+    // Safe reload without "Leave site?" warning
+    function safeReload() {
+        $(window).off('beforeunload');
+        window.onbeforeunload = null;
+        window.onbeforeunload = function() { return undefined; };
+        window.location.reload();
+    }
+
     function openPaymentModal(data) {
         // Store order data globally for this session
         window.ceypayOrderData = data;
