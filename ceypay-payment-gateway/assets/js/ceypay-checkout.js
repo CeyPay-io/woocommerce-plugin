@@ -399,6 +399,10 @@ jQuery(document).ready(function($) {
         // Remove hash to prevent reopening on refresh (use replaceState to not add to history)
         history.replaceState(null, document.title, window.location.pathname + window.location.search);
 
+        // Remove beforeunload warning before reload
+        $(window).off('beforeunload');
+        window.onbeforeunload = null;
+
         // Reload the page to reset the Block Checkout state (removes the "Tick" and restores the form)
         window.location.reload();
     }
@@ -768,6 +772,9 @@ jQuery(document).ready(function($) {
 
                             renderSuccess();
                             setTimeout(function() {
+                                // Remove beforeunload warning before redirect
+                                $(window).off('beforeunload');
+                                window.onbeforeunload = null;
                                 window.location.href = data.success_url;
                             }, 400);
                         } else if (response.data.status === 'USER_REVIEW') {
@@ -800,6 +807,9 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     renderSuccess();
                     setTimeout(function() {
+                        // Remove beforeunload warning before redirect
+                        $(window).off('beforeunload');
+                        window.onbeforeunload = null;
                         window.location.href = data.success_url;
                     }, 400);
                 } else {
