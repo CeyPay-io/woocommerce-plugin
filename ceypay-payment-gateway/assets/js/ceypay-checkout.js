@@ -399,12 +399,8 @@ jQuery(document).ready(function($) {
         // Remove hash to prevent reopening on refresh (use replaceState to not add to history)
         history.replaceState(null, document.title, window.location.pathname + window.location.search);
 
-        // Remove beforeunload warning before reload
-        $(window).off('beforeunload');
-        window.onbeforeunload = null;
-
         // Reload the page to reset the Block Checkout state (removes the "Tick" and restores the form)
-        window.location.reload();
+        safeReload();
     }
 
     $(document).on('click', '.ceypay-modal__close', closeModal);
