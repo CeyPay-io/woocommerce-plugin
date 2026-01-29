@@ -55,15 +55,15 @@ jobs:
           cp -r ${{ env.PLUGIN_SLUG }}/* build/${{ env.PLUGIN_SLUG }}/
           mv plugin-update-checker-${{ env.PUC_VERSION }} build/${{ env.PLUGIN_SLUG }}/plugin-update-checker
 
-      - name: Inject Update Checker Code
+      - name: Inject Update Checker Code (RC - Push to dev)
         run: |
           MAIN_FILE="build/${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php"
 
           cat > /tmp/puc-code.php << 'PUCCODE'
 
           /**
-          * Plugin Update Checker - GitHub Updates
-          * Enables automatic updates from GitHub releases
+          * Plugin Update Checker - GitHub Updates (RC Version)
+          * Enables automatic updates from GitHub pre-releases (RC versions)
           */
           if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
               require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
@@ -75,6 +75,30 @@ jobs:
               );
 
               $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+
+              // RC builds only get updates from pre-releases
+              add_filter( 'puc_request_info_result-ceypay-payment-gateway', function ( $plugin_info, $result ) {
+                  if ( isset( $result ) && is_object( $result ) ) {
+                      // Only show pre-releases (RC versions)
+                      if ( isset( $result->prerelease ) && ! $result->prerelease ) {
+                          return null; // Skip stable releases
+                      }
+                  }
+                  return $plugin_info;
+              }, 10, 2 );
+
+              // Add plugin icons and metadata
+              $ceypay_update_checker->addResultFilter( function ( $plugin_info, $http_response = null ) {
+                  $plugin_info->icons = array(
+                      '1x' => plugins_url( 'assets/images/ceypay-icon.png', __FILE__ ),
+                      'svg' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->banners = array(
+                      'low' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->tested = '6.9';
+                  return $plugin_info;
+              } );
           }
           PUCCODE
 
@@ -172,15 +196,15 @@ jobs:
           cp -r ${{ env.PLUGIN_SLUG }}/* build/${{ env.PLUGIN_SLUG }}/
           mv plugin-update-checker-${{ env.PUC_VERSION }} build/${{ env.PLUGIN_SLUG }}/plugin-update-checker
 
-      - name: Inject Update Checker Code
+      - name: Inject Update Checker Code (RC - PR)
         run: |
           MAIN_FILE="build/${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php"
 
           cat > /tmp/puc-code.php << 'PUCCODE'
 
           /**
-          * Plugin Update Checker - GitHub Updates
-          * Enables automatic updates from GitHub releases
+          * Plugin Update Checker - GitHub Updates (RC Version)
+          * Enables automatic updates from GitHub pre-releases (RC versions)
           */
           if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
               require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
@@ -192,6 +216,30 @@ jobs:
               );
 
               $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+
+              // RC builds only get updates from pre-releases
+              add_filter( 'puc_request_info_result-ceypay-payment-gateway', function ( $plugin_info, $result ) {
+                  if ( isset( $result ) && is_object( $result ) ) {
+                      // Only show pre-releases (RC versions)
+                      if ( isset( $result->prerelease ) && ! $result->prerelease ) {
+                          return null; // Skip stable releases
+                      }
+                  }
+                  return $plugin_info;
+              }, 10, 2 );
+
+              // Add plugin icons and metadata
+              $ceypay_update_checker->addResultFilter( function ( $plugin_info, $http_response = null ) {
+                  $plugin_info->icons = array(
+                      '1x' => plugins_url( 'assets/images/ceypay-icon.png', __FILE__ ),
+                      'svg' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->banners = array(
+                      'low' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->tested = '6.9';
+                  return $plugin_info;
+              } );
           }
           PUCCODE
 
@@ -297,7 +345,7 @@ jobs:
           cp -r ${{ env.PLUGIN_SLUG }}/* build/${{ env.PLUGIN_SLUG }}/
           mv plugin-update-checker-${{ env.PUC_VERSION }} build/${{ env.PLUGIN_SLUG }}/plugin-update-checker
 
-      - name: Inject Update Checker Code
+      - name: Inject Update Checker Code (Stable)
         if: steps.check_release.outputs.exists == 'false'
         run: |
           MAIN_FILE="build/${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php"
@@ -305,8 +353,8 @@ jobs:
           cat > /tmp/puc-code.php << 'PUCCODE'
 
           /**
-          * Plugin Update Checker - GitHub Updates
-          * Enables automatic updates from GitHub releases
+          * Plugin Update Checker - GitHub Updates (Stable Version)
+          * Enables automatic updates from GitHub stable releases only
           */
           if ( file_exists( dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php' ) ) {
               require_once dirname( __FILE__ ) . '/plugin-update-checker/plugin-update-checker.php';
@@ -318,6 +366,30 @@ jobs:
               );
 
               $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+
+              // Stable builds only get updates from stable releases (not pre-releases)
+              add_filter( 'puc_request_info_result-ceypay-payment-gateway', function ( $plugin_info, $result ) {
+                  if ( isset( $result ) && is_object( $result ) ) {
+                      // Skip pre-releases (RC versions)
+                      if ( isset( $result->prerelease ) && $result->prerelease ) {
+                          return null; // Skip RC releases
+                      }
+                  }
+                  return $plugin_info;
+              }, 10, 2 );
+
+              // Add plugin icons and metadata
+              $ceypay_update_checker->addResultFilter( function ( $plugin_info, $http_response = null ) {
+                  $plugin_info->icons = array(
+                      '1x' => plugins_url( 'assets/images/ceypay-icon.png', __FILE__ ),
+                      'svg' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->banners = array(
+                      'low' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->tested = '6.9';
+                  return $plugin_info;
+              } );
           }
           PUCCODE
 
