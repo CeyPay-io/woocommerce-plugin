@@ -53,22 +53,16 @@ function ceypay_init_gateway_class() {
     require_once dirname( __FILE__ ) . '/includes/class-ceypay-analytics.php';
     CeyPay_Analytics::get_instance();
 
-    // Register AJAX hooks globally (outside the class instance for simplicity, or instantiate to register)
-    // Since WC instantiates the gateway, we can hook into init to register AJAX if needed,
-    // but usually, the gateway constructor handles it.
-    // However, WC only instantiates the gateway when needed.
-    // To ensure AJAX works, we might need to instantiate it or register hooks separately.
-    // A common pattern is to let the class register its own hooks in __construct.
-    // But for AJAX to work for non-logged in users, the class must be instantiated.
-
-    // Let's rely on WC instantiating it, OR manually register the AJAX handler here if the class method is static.
-    // Since our methods are not static, we need an instance.
-    // But WC gateways are singletons or instantiated by WC.
-
-    // FIX: We will add a separate hook here to ensure AJAX is registered even if WC doesn't load the gateway on every page.
-    // Only instantiate during AJAX requests to ensure hooks are registered.
+    // Only instantiate the gateway during CeyPay-specific AJAX actions to register hooks.
+    // For WooCommerce AJAX actions (e.g., update_order_review), WC instantiates gateways itself.
+    // Previously, instantiating on ALL AJAX requests caused duplicate filter registrations
+    // (woocommerce_gateway_icon, woocommerce_gateway_title) which could corrupt checkout fragments.
     if ( wp_doing_ajax() ) {
-        $gateway = new WC_Gateway_CeyPay();
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checking action name to decide instantiation
+        $action = isset( $_REQUEST['action'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) : '';
+        if ( strpos( $action, 'ceypay_' ) === 0 ) {
+            new WC_Gateway_CeyPay();
+        }
     }
 }
 add_action( 'plugins_loaded', 'ceypay_init_gateway_class', 11 );

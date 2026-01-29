@@ -62,11 +62,26 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
     }
 
     /**
-     * Enqueue styles for checkout page
+     * Enqueue styles and scripts for checkout page
      */
     public function enqueue_checkout_styles() {
         if ( is_checkout() || is_cart() ) {
             wp_enqueue_style( 'ceypay-css', plugins_url( '../assets/css/ceypay.css', __FILE__ ), array(), CEYPAY_VERSION );
+
+            // Enqueue analytics script first (dependency for checkout script)
+            wp_enqueue_script( 'ceypay-analytics', plugins_url( '../assets/js/ceypay-analytics.js', __FILE__ ), array(), CEYPAY_VERSION, true );
+
+            if ( class_exists( 'CeyPay_Analytics' ) ) {
+                $analytics = CeyPay_Analytics::get_instance();
+                wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $analytics->get_frontend_tracking_data() );
+            }
+
+            wp_enqueue_script( 'ceypay-checkout', plugins_url( '../assets/js/ceypay-checkout.js', __FILE__ ), array( 'jquery', 'ceypay-analytics' ), CEYPAY_VERSION, true );
+            wp_localize_script( 'ceypay-checkout', 'ceypay_params', array(
+                'ajax_url'   => admin_url( 'admin-ajax.php' ),
+                'nonce'      => wp_create_nonce( 'ceypay_status_check' ),
+                'assets_url' => plugins_url( '../assets/', __FILE__ ),
+            ) );
         }
     }
 
@@ -313,29 +328,10 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
             echo wp_kses_post( wpautop( $this->description ) );
         }
 
-        // Enqueue styles and scripts
-        wp_enqueue_style( 'ceypay-css', plugins_url( '../assets/css/ceypay.css?v=' . CEYPAY_VERSION, __FILE__ ), array(), CEYPAY_VERSION );
+        // Scripts and styles are enqueued via wp_enqueue_scripts hook (enqueue_checkout_styles method)
+        // to avoid issues during WooCommerce AJAX checkout updates (update_order_review).
 
-        // Enqueue analytics script BEFORE checkout script (dependency)
-        wp_enqueue_script( 'ceypay-analytics', plugins_url( '../assets/js/ceypay-analytics.js?v=' . CEYPAY_VERSION, __FILE__ ), array(), CEYPAY_VERSION, true );
-
-        // Localize analytics data
-        if ( class_exists( 'CeyPay_Analytics' ) ) {
-            $analytics = CeyPay_Analytics::get_instance();
-            // $data = $analytics->get_frontend_tracking_data(); // Ensure this returns sanitized data if used
-            // wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $data );
-            // Re-enabling with strict checking assumption in class
-             wp_localize_script( 'ceypay-analytics', 'ceypay_analytics_params', $analytics->get_frontend_tracking_data() );
-        }
-
-        wp_enqueue_script( 'ceypay-checkout', plugins_url( '../assets/js/ceypay-checkout.js?v=' . CEYPAY_VERSION, __FILE__ ), array( 'jquery', 'ceypay-analytics' ), CEYPAY_VERSION, true );
-        wp_localize_script( 'ceypay-checkout', 'ceypay_params', array(
-            'ajax_url'   => admin_url( 'admin-ajax.php' ),
-            'nonce'      => wp_create_nonce( 'ceypay_status_check' ),
-            'assets_url' => plugins_url( '../assets/', __FILE__ ),
-        ) );
-
-        echo '<fieldset id="wc-' . esc_attr( $this->id ) . '-cc-form" class="wc-credit-card-form wc-payment-form" style="background:transparent;">';
+        echo '<fieldset id="wc-' . esc_attr( $this->id ) . '-ceypay-form" class="wc-payment-form" style="background:transparent;">';
         // Provider selection moved to modal
         echo '<div class="clear"></div></fieldset>';
     }

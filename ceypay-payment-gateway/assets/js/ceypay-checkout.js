@@ -246,6 +246,10 @@ jQuery(document).ready(function($) {
             'visibility': 'hidden',
             'transition': 'opacity 0.3s ease, visibility 0.3s ease'
         });
+        // Remove beforeunload handler (set by WooCommerce checkout) to prevent
+        // "Leave site?" prompt when redirecting to the success page
+        window.onbeforeunload = null;
+        $(window).off('beforeunload');
     }
 
     function renderUserReview() {
@@ -399,6 +403,10 @@ jQuery(document).ready(function($) {
         // Remove hash to prevent reopening on refresh (use replaceState to not add to history)
         history.replaceState(null, document.title, window.location.pathname + window.location.search);
 
+        // Remove beforeunload handler to prevent "Leave site?" prompt
+        window.onbeforeunload = null;
+        $(window).off('beforeunload');
+
         // Reload the page to reset the Block Checkout state (removes the "Tick" and restores the form)
         window.location.reload();
     }
@@ -457,6 +465,8 @@ jQuery(document).ready(function($) {
                                 // Order already paid, clear hash and redirect to success
                                 clearHash();
                                 if (data.success_url) {
+                                    window.onbeforeunload = null;
+                                    $(window).off('beforeunload');
                                     window.location.href = data.success_url;
                                 }
                             } else {
