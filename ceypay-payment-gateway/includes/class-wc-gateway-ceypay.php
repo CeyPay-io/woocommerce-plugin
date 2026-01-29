@@ -29,6 +29,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
         $this->method_title       = __( 'CeyPay', 'ceypay-payment-gateway' );
         $this->method_description = __( 'Enable customers to pay using digital currency balances from supported centralized exchanges with CeyPay.', 'ceypay-payment-gateway' );
 
+        // Supported features - CRITICAL: Without this, WooCommerce may bypass payment processing
+        $this->supports = array(
+            'products',
+        );
+
         // Load the settings
         $this->init_form_fields();
         $this->init_settings();
