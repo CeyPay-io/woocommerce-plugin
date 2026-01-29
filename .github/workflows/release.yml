@@ -13,7 +13,7 @@ permissions:
 
 env:
   PLUGIN_SLUG: ceypay-payment-gateway
-  PUC_VERSION: '5.4'
+  PUC_VERSION: "5.4"
 
 jobs:
   # RC Release - when pushed to dev branch
@@ -75,6 +75,19 @@ jobs:
               );
 
               $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+
+              // Add plugin icons and metadata
+              $ceypay_update_checker->addResultFilter( function ( $plugin_info, $http_response = null ) {
+                  $plugin_info->icons = array(
+                      '1x' => plugins_url( 'assets/images/ceypay-icon.png', __FILE__ ),
+                      'svg' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->banners = array(
+                      'low' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->tested = '6.9';
+                  return $plugin_info;
+              } );
           }
           PUCCODE
 
@@ -92,14 +105,29 @@ jobs:
           sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
           echo "Analytics enabled by default for release build"
 
+      - name: Update Version and Readme for RC
+        run: |
+          RC_TAG="${{ steps.rc.outputs.rc_tag }}"
+
+          # Update plugin file version
+          MAIN_FILE="build/${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php"
+          sed -i "s/Version:\s*[0-9.]*/Version:     ${RC_TAG}/" "$MAIN_FILE"
+
+          # Update readme.txt - change "Stable tag" to "Release Tag" and use RC version
+          README_FILE="build/${{ env.PLUGIN_SLUG }}/readme.txt"
+          sed -i "s/Stable tag: [0-9.]*/Release Tag: ${RC_TAG}/" "$README_FILE"
+
+          echo "Updated version to ${RC_TAG} in plugin file and readme"
+
       - name: Build Plugin ZIP
         run: |
+          RC_TAG="${{ steps.rc.outputs.rc_tag }}"
           cd build
-          zip -r ../${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip ${{ env.PLUGIN_SLUG }}/ \
+          zip -r ../${{ env.PLUGIN_SLUG }}-${RC_TAG}.zip ${{ env.PLUGIN_SLUG }}/ \
             -x "*.git*" \
             -x "*/.DS_Store"
           cd ..
-          ls -la ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip
+          ls -la ${{ env.PLUGIN_SLUG }}-${RC_TAG}.zip
 
       - name: Create RC Release
         env:
@@ -124,7 +152,7 @@ jobs:
           EOF
 
           gh release create "$RC_TAG" \
-            ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip \
+            ${{ env.PLUGIN_SLUG }}-${RC_TAG}.zip \
             --title "CeyPay Payment Gateway ${RC_TAG}" \
             --notes-file rc-notes.md \
             --prerelease
@@ -192,6 +220,19 @@ jobs:
               );
 
               $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+
+              // Add plugin icons and metadata
+              $ceypay_update_checker->addResultFilter( function ( $plugin_info, $http_response = null ) {
+                  $plugin_info->icons = array(
+                      '1x' => plugins_url( 'assets/images/ceypay-icon.png', __FILE__ ),
+                      'svg' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->banners = array(
+                      'low' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->tested = '6.9';
+                  return $plugin_info;
+              } );
           }
           PUCCODE
 
@@ -209,14 +250,29 @@ jobs:
           sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
           echo "Analytics enabled by default for release build"
 
+      - name: Update Version and Readme for RC
+        run: |
+          RC_TAG="${{ steps.rc.outputs.rc_tag }}"
+
+          # Update plugin file version
+          MAIN_FILE="build/${{ env.PLUGIN_SLUG }}/${{ env.PLUGIN_SLUG }}.php"
+          sed -i "s/Version:\s*[0-9.]*/Version:     ${RC_TAG}/" "$MAIN_FILE"
+
+          # Update readme.txt - change "Stable tag" to "Release Tag" and use RC version
+          README_FILE="build/${{ env.PLUGIN_SLUG }}/readme.txt"
+          sed -i "s/Stable tag: [0-9.]*/Release Tag: ${RC_TAG}/" "$README_FILE"
+
+          echo "Updated version to ${RC_TAG} in plugin file and readme"
+
       - name: Build Plugin ZIP
         run: |
+          RC_TAG="${{ steps.rc.outputs.rc_tag }}"
           cd build
-          zip -r ../${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip ${{ env.PLUGIN_SLUG }}/ \
+          zip -r ../${{ env.PLUGIN_SLUG }}-${RC_TAG}.zip ${{ env.PLUGIN_SLUG }}/ \
             -x "*.git*" \
             -x "*/.DS_Store"
           cd ..
-          ls -la ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip
+          ls -la ${{ env.PLUGIN_SLUG }}-${RC_TAG}.zip
 
       - name: Create RC Release
         env:
@@ -241,7 +297,7 @@ jobs:
           EOF
 
           gh release create "$RC_TAG" \
-            ${{ env.PLUGIN_SLUG }}-v${{ steps.version.outputs.version }}.zip \
+            ${{ env.PLUGIN_SLUG }}-${RC_TAG}.zip \
             --title "CeyPay Payment Gateway ${RC_TAG}" \
             --notes-file rc-notes.md \
             --prerelease
@@ -318,6 +374,19 @@ jobs:
               );
 
               $ceypay_update_checker->getVcsApi()->enableReleaseAssets();
+
+              // Add plugin icons and metadata
+              $ceypay_update_checker->addResultFilter( function ( $plugin_info, $http_response = null ) {
+                  $plugin_info->icons = array(
+                      '1x' => plugins_url( 'assets/images/ceypay-icon.png', __FILE__ ),
+                      'svg' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->banners = array(
+                      'low' => plugins_url( 'assets/images/ceypay-logo.svg', __FILE__ ),
+                  );
+                  $plugin_info->tested = '6.9';
+                  return $plugin_info;
+              } );
           }
           PUCCODE
 
