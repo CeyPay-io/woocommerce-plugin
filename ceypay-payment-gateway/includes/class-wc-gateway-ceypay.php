@@ -81,6 +81,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway {
                 'ajax_url'   => admin_url( 'admin-ajax.php' ),
                 'nonce'      => wp_create_nonce( 'ceypay_status_check' ),
                 'assets_url' => plugins_url( '../assets/', __FILE__ ),
+                'version'    => CEYPAY_VERSION,
             ) );
         }
     }
