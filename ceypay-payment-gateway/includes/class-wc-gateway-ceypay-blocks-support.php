@@ -31,6 +31,7 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
             'ajax_url'   => admin_url( 'admin-ajax.php' ),
             'nonce'      => wp_create_nonce( 'ceypay_status_check' ),
             'assets_url' => plugins_url( '../assets/', __FILE__ ),
+            'version'    => CEYPAY_VERSION,
         ) );
 
         // Enqueue Styles

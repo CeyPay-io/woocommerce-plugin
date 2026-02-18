@@ -200,42 +200,46 @@ jQuery(document).ready(function($) {
     // Append Modal to Body
     $('body').append(modalTemplate);
 
+    // Shared tooltip helper
+    function showTooltip(el, html) {
+        var tip = $('<div class="ceypay-tooltip">' + html + '</div>');
+        $('body').append(tip);
+        requestAnimationFrame(function() {
+            var rect = el.getBoundingClientRect();
+            tip.css({
+                top:  (rect.top  - tip.outerHeight() - 8) + 'px',
+                left: (rect.left + rect.width / 2 - tip.outerWidth() / 2) + 'px'
+            });
+            requestAnimationFrame(function() { tip.addClass('is-visible'); });
+        });
+        return tip;
+    }
+
+    function hideTooltip(tipRef) {
+        if (tipRef) {
+            tipRef.removeClass('is-visible');
+            setTimeout(function() { if (tipRef) tipRef.remove(); }, 200);
+        }
+    }
+
     // Help Button Tooltip on Hover
     var helpTooltip = null;
     $(document).on('mouseenter', '.ceypay-help-btn', function() {
-        var $btn = $(this);
-        var rect = this.getBoundingClientRect();
-
-        // Create tooltip with help text and email
-        helpTooltip = $('<div class="ceypay-tooltip">Need some help?<br>Reach support@ceypay.io</div>');
-        $('body').append(helpTooltip);
-
-        // Position tooltip above the button
-        var tooltipHeight = helpTooltip.outerHeight();
-        var tooltipWidth = helpTooltip.outerWidth();
-        helpTooltip.css({
-            top: (rect.top - tooltipHeight - 12) + 'px',
-            left: (rect.left + rect.width / 2 - tooltipWidth / 2) + 'px'
-        });
-
-        // Show tooltip
-        setTimeout(function() {
-            if (helpTooltip) {
-                helpTooltip.addClass('is-visible');
-            }
-        }, 10);
+        helpTooltip = showTooltip(this, 'Need some help?<br>Reach support@ceypay.io');
+    });
+    $(document).on('mouseleave', '.ceypay-help-btn', function() {
+        hideTooltip(helpTooltip);
+        helpTooltip = null;
     });
 
-    $(document).on('mouseleave', '.ceypay-help-btn', function() {
-        if (helpTooltip) {
-            helpTooltip.removeClass('is-visible');
-            setTimeout(function() {
-                if (helpTooltip) {
-                    helpTooltip.remove();
-                    helpTooltip = null;
-                }
-            }, 200);
-        }
+    // Footer CeyPay brand — version tooltip on hover
+    var versionTooltip = null;
+    $(document).on('mouseenter', '.ceypay-footer-brand', function() {
+        versionTooltip = showTooltip(this, 'v' + ceypay_params.version);
+    });
+    $(document).on('mouseleave', '.ceypay-footer-brand', function() {
+        hideTooltip(versionTooltip);
+        versionTooltip = null;
     });
 
     function renderSuccess() {

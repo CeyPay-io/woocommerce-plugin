@@ -428,10 +428,12 @@
 .ceypay-tooltip {
     position: fixed;
     background: #ffffff;
-    color: #0F172A;
-    padding: 8px 12px;
+    color: var(--ceypay-text-muted);
+    padding: 5px 10px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 12px;
+    font-family: var(--ceypay-font);
+    font-weight: 400;
     line-height: 1.5;
     z-index: 100000;
     pointer-events: none;
@@ -458,32 +460,18 @@
     text-decoration: underline;
 }
 
-/* Arrow for tooltip (pointing down) */
+/* Arrow — single rotated square, flush with tooltip body */
 .ceypay-tooltip::after {
     content: '';
     position: absolute;
-    bottom: -7px;
+    bottom: -5px;
     left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid #ffffff;
-}
-
-/* Arrow border for tooltip */
-.ceypay-tooltip::before {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-top: 7px solid #E2E8F0;
+    transform: translateX(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background: #ffffff;
+    border-right: 1px solid #E2E8F0;
+    border-bottom: 1px solid #E2E8F0;
 }
 
 /* --- Provider List --- */
@@ -1010,11 +998,22 @@
     letter-spacing: 0.2px !important;
 }
 
+.ceypay-footer-version {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    font-size: 9px !important;
+    letter-spacing: 0.2px !important;
+}
+
 .ceypay-footer-logo {
     height: 11px !important;
     width: auto !important;
     opacity: 0.8 !important;
     display: block !important;
+}
+
+.ceypay-footer-brand {
+    cursor: default !important;
 }
 
 /* --- End of Styles --- */
