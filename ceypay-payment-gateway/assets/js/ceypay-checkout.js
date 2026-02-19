@@ -26,7 +26,7 @@ jQuery(document).ready(function($) {
 
     // Pre-compute branding HTML before building template
     var brandingHtml = ceypay_params.show_branding === '1'
-        ? '<div class="ceypay-footer-powered"><span>Powered by</span><img src="' + ceypay_params.assets_url + 'images/ceypay-logo.svg" alt="CeyPay" class="ceypay-footer-logo"></div>'
+        ? '<div class="ceypay-footer-powered"><span>Powered by</span><img src="' + ceypay_params.assets_url + 'images/ceypay-logo.svg" alt="CeyPay" class="ceypay-footer-logo" data-tooltip="v' + ceypay_params.version + '"></div>'
         : '';
 
     // Modal HTML Template
@@ -233,12 +233,13 @@ jQuery(document).ready(function($) {
         helpTooltip = null;
     });
 
-    // Footer CeyPay brand — version tooltip on hover
+    // Footer CeyPay logo — version tooltip on hover
     var versionTooltip = null;
-    $(document).on('mouseenter', '.ceypay-footer-brand', function() {
-        versionTooltip = showTooltip(this, 'v' + ceypay_params.version);
+    $(document).on('mouseenter', '.ceypay-footer-logo', function() {
+        var version = $(this).data('tooltip') || 'v' + ceypay_params.version;
+        versionTooltip = showTooltip(this, version);
     });
-    $(document).on('mouseleave', '.ceypay-footer-brand', function() {
+    $(document).on('mouseleave', '.ceypay-footer-logo', function() {
         hideTooltip(versionTooltip);
         versionTooltip = null;
     });

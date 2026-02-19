@@ -139,6 +139,33 @@ For a summary of how this plugin handles user data, please refer to the "Externa
 
 == Changelog ==
 
+= 1.3.0 =
+*   Added branding toggle option in WooCommerce settings to show "Powered by CeyPay" in checkout modal.
+*   Added error reporting and in-memory storage for debugging.
+*   Improved AJAX handling to prevent "Leave site?" prompts and optimize performance.
+
+= 1.2.9 =
+*   Enhanced tooltips and added versioning support in CeyPay integration.
+
+= 1.2.8 =
+*   Enhanced sandbox mode with improved test mode badge styles and functionality.
+*   Updated plugin information metadata and banners.
+
+= 1.2.7 =
+*   Added test mode badges and alerts to checkout and payment modal.
+
+= 1.2.5 =
+*   Enhanced CeyPay Analytics integration with native WooCommerce fields for transaction IDs.
+*   Added HPOS compatibility declaration.
+
+= 1.2.4 =
+*   Added High-Performance Order Storage (HPOS) compatibility.
+*   Improved plugin metadata and banner information.
+
+= 1.2.3 =
+*   Initial stable release with production-ready features.
+*   Enhanced provider selection and checkout experience.
+
 = 1.2.1 =
 *   Added KuCoin Pay as a coming soon provider in the modal and classic block integration.
 *   Redesigned the classic block provider chips to a minimal, pill-style layout for consistency.
