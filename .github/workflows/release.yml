@@ -103,7 +103,8 @@ jobs:
         run: |
           GATEWAY_FILE="build/${{ env.PLUGIN_SLUG }}/includes/class-wc-gateway-ceypay.php"
           sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
-          echo "Analytics enabled by default for release build"
+          sed -i "s/'default'     => 'no',  \/\/ branding/'default'     => 'yes', \/\/ branding enabled for releases/g" "$GATEWAY_FILE"
+          echo "Analytics and branding enabled by default for release build"
 
       - name: Update Version and Readme for RC
         run: |
@@ -248,7 +249,8 @@ jobs:
         run: |
           GATEWAY_FILE="build/${{ env.PLUGIN_SLUG }}/includes/class-wc-gateway-ceypay.php"
           sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
-          echo "Analytics enabled by default for release build"
+          sed -i "s/'default'     => 'no',  \/\/ branding/'default'     => 'yes', \/\/ branding enabled for releases/g" "$GATEWAY_FILE"
+          echo "Analytics and branding enabled by default for release build"
 
       - name: Update Version and Readme for RC
         run: |
@@ -403,7 +405,8 @@ jobs:
         run: |
           GATEWAY_FILE="build/${{ env.PLUGIN_SLUG }}/includes/class-wc-gateway-ceypay.php"
           sed -i "s/'default'     => 'no',  \/\/ analytics/'default'     => 'yes', \/\/ analytics enabled for releases/g" "$GATEWAY_FILE"
-          echo "Analytics enabled by default for release build"
+          sed -i "s/'default'     => 'no',  \/\/ branding/'default'     => 'yes', \/\/ branding enabled for releases/g" "$GATEWAY_FILE"
+          echo "Analytics and branding enabled by default for release build"
 
       - name: Build Plugin ZIP
         if: steps.check_release.outputs.exists == 'false'
