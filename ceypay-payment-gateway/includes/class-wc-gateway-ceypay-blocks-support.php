@@ -28,10 +28,11 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
         // Register Legacy Checkout Script (for Modal functionality)
         wp_register_script( 'ceypay-checkout', plugins_url( '../assets/js/ceypay-checkout.js', __FILE__ ), array( 'jquery', 'ceypay-analytics' ), CEYPAY_VERSION, true );
         wp_localize_script( 'ceypay-checkout', 'ceypay_params', array(
-            'ajax_url'   => admin_url( 'admin-ajax.php' ),
-            'nonce'      => wp_create_nonce( 'ceypay_status_check' ),
-            'assets_url' => plugins_url( '../assets/', __FILE__ ),
-            'version'    => CEYPAY_VERSION,
+            'ajax_url'      => admin_url( 'admin-ajax.php' ),
+            'nonce'         => wp_create_nonce( 'ceypay_status_check' ),
+            'assets_url'    => plugins_url( '../assets/', __FILE__ ),
+            'version'       => CEYPAY_VERSION,
+            'show_branding' => isset( $this->settings['show_branding'] ) && 'yes' === $this->settings['show_branding'] ? '1' : '0',
         ) );
 
         // Enqueue Styles

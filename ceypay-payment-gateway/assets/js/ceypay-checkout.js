@@ -24,6 +24,11 @@ jQuery(document).ready(function($) {
         }
     });
 
+    // Pre-compute branding HTML before building template
+    var brandingHtml = ceypay_params.show_branding === '1'
+        ? '<div class="ceypay-footer-powered"><span>Powered by</span><img src="' + ceypay_params.assets_url + 'images/ceypay-logo.svg" alt="CeyPay" class="ceypay-footer-logo" data-tooltip="v' + ceypay_params.version + '"></div>'
+        : '';
+
     // Modal HTML Template
     var modalTemplate = `
         <div id="ceypay-modal" class="ceypay-modal">
@@ -37,7 +42,7 @@ jQuery(document).ready(function($) {
                         </svg>
                     </div>
                     <div class="ceypay-header-center">
-                        <h2 class="ceypay-modal__title" id="ceypay-provider-title">Select Provider</h2>
+                        <h2 class="ceypay-modal__title" id="ceypay-provider-title">Select provider</h2>
                         <span class="ceypay-testmode-badge ceypay-testmode-badge--modal" id="ceypay-testmode-badge" style="display: none;">
                             <svg class="ceypay-sandbox-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -70,7 +75,7 @@ jQuery(document).ready(function($) {
                             <line x1="12" y1="9" x2="12" y2="13"></line>
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
-                        <span>Test Mode Active: No real funds will be deducted.</span>
+                        <span>Test mode active: No real funds will be deducted.</span>
                     </div>
                 </div>
 
@@ -131,7 +136,7 @@ jQuery(document).ready(function($) {
                                 <span class="ceypay-provider-name">Freedom Pay</span>
                                 <span class="ceypay-provider-desc">Pay with crypto via Bitazza</span>
                             </div>
-                            <span class="ceypay-badge">Coming Soon</span>
+                            <span class="ceypay-badge">Coming soon</span>
                         </div>
                         <div class="ceypay-provider-btn ceypay-provider-btn--disabled" role="button" aria-disabled="true">
                             <div class="ceypay-provider-icon">
@@ -141,7 +146,7 @@ jQuery(document).ready(function($) {
                                 <span class="ceypay-provider-name">Solana Pay</span>
                                 <span class="ceypay-provider-desc">Pay with crypto via Solana</span>
                             </div>
-                            <span class="ceypay-badge">Coming Soon</span>
+                            <span class="ceypay-badge">Coming soon</span>
                         </div>
                         <div class="ceypay-provider-btn ceypay-provider-btn--disabled" role="button" aria-disabled="true">
                             <div class="ceypay-provider-icon">
@@ -151,7 +156,7 @@ jQuery(document).ready(function($) {
                                 <span class="ceypay-provider-name">TON</span>
                                 <span class="ceypay-provider-desc">Pay with crypto via TON</span>
                             </div>
-                            <span class="ceypay-badge">Coming Soon</span>
+                            <span class="ceypay-badge">Coming soon</span>
                         </div>
                     </div>
                 </div>
@@ -177,8 +182,8 @@ jQuery(document).ready(function($) {
                 </div>
 
                 <div class="ceypay-modal__actions" id="ceypay-actions" style="display: none;">
-                    <a id="ceypay-deep-link" href="#" target="_blank" class="ceypay-btn ceypay-btn--primary">Open App</a>
-                    <div id="ceypay-simulate-success" class="ceypay-btn ceypay-btn--ghost" role="button" tabindex="0" style="display: none;">Simulate Success (Test Mode)</div>
+                    <a id="ceypay-deep-link" href="#" target="_blank" class="ceypay-btn ceypay-btn--primary">Open app</a>
+                    <div id="ceypay-simulate-success" class="ceypay-btn ceypay-btn--ghost" role="button" tabindex="0" style="display: none;">Simulate success (test mode)</div>
                 </div>
 
                 <!-- Modal Footer -->
@@ -187,11 +192,7 @@ jQuery(document).ready(function($) {
                         By continuing, you agree to<br>
                         our <a href="https://www.ceypay.io/legal/terms" target="_blank" rel="noopener noreferrer" class="ceypay-footer-link">Terms of Service</a> & <a href="https://www.ceypay.io/legal/privacy" target="_blank" rel="noopener noreferrer" class="ceypay-footer-link">Privacy Policy</a>.
                     </p>
-                    <div class="ceypay-footer-powered">
-                        <span>Powered by</span>
-                        <img src="${ceypay_params.assets_url}images/ceypay-symbol.png" alt="CeyPay" class="ceypay-footer-logo">
-                        <span class="ceypay-footer-brand">CeyPay</span>
-                    </div>
+                    ${brandingHtml}
                 </div>
             </div>
         </div>
@@ -232,12 +233,13 @@ jQuery(document).ready(function($) {
         helpTooltip = null;
     });
 
-    // Footer CeyPay brand — version tooltip on hover
+    // Footer CeyPay logo — version tooltip on hover
     var versionTooltip = null;
-    $(document).on('mouseenter', '.ceypay-footer-brand', function() {
-        versionTooltip = showTooltip(this, 'v' + ceypay_params.version);
+    $(document).on('mouseenter', '.ceypay-footer-logo', function() {
+        var version = $(this).data('tooltip') || 'v' + ceypay_params.version;
+        versionTooltip = showTooltip(this, version);
     });
-    $(document).on('mouseleave', '.ceypay-footer-brand', function() {
+    $(document).on('mouseleave', '.ceypay-footer-logo', function() {
         hideTooltip(versionTooltip);
         versionTooltip = null;
     });
@@ -305,9 +307,9 @@ jQuery(document).ready(function($) {
 
                     // Restore actions HTML
                     var $actions = $('#ceypay-actions');
-                    var actionsHtml = '<a id="ceypay-deep-link" href="#" target="_blank" class="ceypay-btn ceypay-btn--primary">Open ' + toTitleCase(newData.provider) + ' App</a>';
+                    var actionsHtml = '<a id="ceypay-deep-link" href="#" target="_blank" class="ceypay-btn ceypay-btn--primary">Open ' + toTitleCase(newData.provider) + ' app</a>';
                     if (data.test_mode) {
-                        actionsHtml += '<div id="ceypay-simulate-success" class="ceypay-btn ceypay-btn--ghost" role="button" tabindex="0">Simulate Success (Test Mode)</div>';
+                        actionsHtml += '<div id="ceypay-simulate-success" class="ceypay-btn ceypay-btn--ghost" role="button" tabindex="0">Simulate success (test mode)</div>';
                     }
                     $actions.html(actionsHtml);
 
@@ -319,7 +321,7 @@ jQuery(document).ready(function($) {
                         showManualRefreshButton(data);
                     } else {
                         showCeyPayError(response.data.message || 'Failed to refresh QR code');
-                        $('#ceypay-refresh-qr').text('Refresh QR Code').prop('disabled', false);
+                        $('#ceypay-refresh-qr').text('Refresh QR code').prop('disabled', false);
                     }
                 }
             },
@@ -329,7 +331,7 @@ jQuery(document).ready(function($) {
                     showManualRefreshButton(data);
                 } else {
                     showCeyPayError('Connection error. Please try again.');
-                    $('#ceypay-refresh-qr').text('Refresh QR Code').prop('disabled', false);
+                    $('#ceypay-refresh-qr').text('Refresh QR code').prop('disabled', false);
                 }
             }
         });
@@ -348,7 +350,7 @@ jQuery(document).ready(function($) {
 
         // Show refresh button
         var $actions = $('#ceypay-actions');
-        $actions.html('<div id="ceypay-refresh-qr" class="ceypay-btn ceypay-btn--primary" role="button" tabindex="0">Refresh QR Code</div>');
+        $actions.html('<div id="ceypay-refresh-qr" class="ceypay-btn ceypay-btn--primary" role="button" tabindex="0">Refresh QR code</div>');
         $actions.show();
 
         // Handle manual refresh click
@@ -531,7 +533,7 @@ jQuery(document).ready(function($) {
     }
 
     function showProviderSelection(animate) {
-        $('#ceypay-provider-title').text('Select Provider');
+        $('#ceypay-provider-title').text('Select provider');
         $('#ceypay-subtitle').text('Choose your preferred payment method.').show();
 
         // Ensure test mode alert is shown if active
@@ -661,7 +663,7 @@ jQuery(document).ready(function($) {
         }
 
         // Update button text with provider name
-        $('#ceypay-deep-link').text('Open ' + toTitleCase(data.provider) + ' App');
+        $('#ceypay-deep-link').text('Open ' + toTitleCase(data.provider) + ' app');
 
         if (data.test_mode) {
             $('#ceypay-simulate-success').show().off('click').on('click', function() {
@@ -822,12 +824,12 @@ jQuery(document).ready(function($) {
                     }, 400);
                 } else {
                     alert('Simulation failed: ' + response.data.message);
-                    $('#ceypay-simulate-success').text('Simulate Success (Test Mode)').removeAttr('aria-disabled');
+                    $('#ceypay-simulate-success').text('Simulate success (test mode)').removeAttr('aria-disabled');
                 }
             },
             error: function() {
                 alert('Simulation error.');
-                $('#ceypay-simulate-success').text('Simulate Success (Test Mode)').removeAttr('aria-disabled');
+                $('#ceypay-simulate-success').text('Simulate success (test mode)').removeAttr('aria-disabled');
             }
         });
     }
