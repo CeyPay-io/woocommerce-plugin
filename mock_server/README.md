@@ -7,8 +7,8 @@ This is a simple Python Flask server to mock the CeyPay API for testing the Word
 - PHP installed (for PHP version).
 
 ## How to Run (Python)
-1.  Double-click `run_mock_server.bat` 
-    OR 
+1.  Double-click `run_mock_server.bat`
+    OR
     Run the following commands in a terminal:
     ```bash
     pip install -r requirements.txt
@@ -157,3 +157,85 @@ This is a simple Python Flask server to mock the CeyPay API for testing the Word
         "message": "Test message"
     }
     ```
+
+### 11. Error Reporting
+*   **URL:** `POST /errors/report`
+*   **Description:** Accepts error reports from clients and logs them for debugging. Supports CORS for cross-origin requests.
+*   **Request Body:**
+    ```json
+    {
+        "error": "Payment gateway connection failed",
+        "context": {
+            "gateway": "BINANCE",
+            "transaction_id": "txn_test_123",
+            "amount": "100.00",
+            "currency": "USD"
+        },
+        "severity": "error",  // "error", "warning", or "info"
+        "source": "plugin",   // "frontend", "backend", "plugin", etc.
+        "additional_data": {  // Optional additional context
+            "wp_version": "6.4.1",
+            "plugin_version": "1.0.0",
+            "php_version": "8.1.0"
+        }
+    }
+    ```
+*   **Response:**
+    ```json
+    {
+        "status": "success",
+        "message": "Error report logged successfully",
+        "error_id": "err_abc123def456",
+        "timestamp": "2024-01-30T10:30:00+00:00"
+    }
+    ```
+*   **Features:**
+    - Validates required fields (`error`, `context`)
+    - Logs errors to `error_reports.json` file
+    - Sends critical errors (severity: "error", "critical") to Telegram
+    - Includes client IP, user agent, and request headers
+    - Limits stored errors to last 1000 entries
+
+### 12. Get Error Reports
+*   **URL:** `GET /errors`
+*   **Description:** Retrieves logged error reports with optional filtering.
+*   **Query Parameters:**
+    - `severity`: Filter by severity ("error", "warning", "info")
+    - `source`: Filter by source ("frontend", "backend", "plugin", etc.)
+    - `limit`: Maximum number of reports to return (default: 50, max: 500)
+*   **Response:**
+    ```json
+    {
+        "status": "success",
+        "count": 3,
+        "errors": [
+            {
+                "id": "err_abc123def456",
+                "timestamp": "2024-01-30T10:30:00+00:00",
+                "severity": "error",
+                "source": "plugin",
+                "error": "Payment gateway connection failed",
+                "context": { ... },
+                "user_agent": "WordPress/6.4.1",
+                "user_ip": "192.168.1.100",
+                "request_headers": { ... },
+                "additional_data": { ... }
+            }
+        ]
+    }
+    ```
+
+### 13. Error Reports Viewer
+*   **URL:** `GET /errors`
+*   **Description:** Web interface to view error reports with filtering and summary statistics.
+*   **Features:**
+    - Real-time error summary dashboard
+    - Filter by severity and source
+    - Auto-refresh capability
+    - Clear all reports functionality
+    - Detailed error cards with context information
+
+### 14. Clear Error Reports
+*   **URL:** `POST /errors/clear`
+*   **Description:** Clears all stored error reports.
+*   **Usage:** Available via the Error Reports Viewer interface.

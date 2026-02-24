@@ -21,34 +21,57 @@
 
 /* --- Test Mode Badge --- */
 .ceypay-testmode-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: var(--ceypay-testmode);
+    text-transform: none;
+    letter-spacing: 0.3px;
+    background: #0F172A;
     color: white;
-    border-radius: 6px;
+    border-radius: 4px;
     vertical-align: middle;
     margin-left: 8px;
-    line-height: 1.2;
+    line-height: 1;
+}
+
+.ceypay-sandbox-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
 }
 
 .ceypay-testmode-badge--checkout {
     font-size: 10px;
-    padding: 3px 8px;
-    margin-left: 6px;
+    padding: 4px 8px;
+    margin-left: 8px;
+}
+
+.ceypay-testmode-badge--checkout .ceypay-sandbox-icon {
+    width: 12px;
+    height: 12px;
 }
 
 .ceypay-testmode-badge--modal {
-    position: absolute;
-    top: 50%;
-    right: 70px;
-    transform: translateY(-50%);
+    position: relative;
     font-size: 10px;
+    font-weight: 600;
     padding: 4px 8px;
     margin: 0;
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+}
+
+.ceypay-testmode-badge--modal .ceypay-sandbox-icon {
+    width: 12px;
+    height: 12px;
 }
 
 /* --- Modal Core --- */
@@ -281,6 +304,7 @@
 
 .ceypay-header-center {
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -289,6 +313,7 @@
     grid-column: 2;
     grid-row: 1;
     z-index: 5;
+    gap: 12px;
 }
 
 .ceypay-modal__title {
@@ -300,21 +325,7 @@
     text-align: center;
 }
 
-.ceypay-testmode-badge--modal {
-    position: absolute;
-    left: 100%;
-    top: -5px;
-    margin-left: 0;
-    font-size: 8px; /* Slightly smaller font to fit better */
-    font-weight: 700;
-    padding: 4px 6px; /* Increased padding for better breathing room */
-    border-radius: 4px;
-    line-height: 1;
-    white-space: nowrap;
-    width: max-content;
-    letter-spacing: 0.5px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Subtle depth */
-}
+/* Removed duplicate - see line 44 for the actual badge styles */
 
 /* Hide old pill style */
 .ceypay-pill {
@@ -417,10 +428,12 @@
 .ceypay-tooltip {
     position: fixed;
     background: #ffffff;
-    color: #0F172A;
-    padding: 8px 12px;
+    color: var(--ceypay-text-muted);
+    padding: 5px 10px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 12px;
+    font-family: var(--ceypay-font);
+    font-weight: 400;
     line-height: 1.5;
     z-index: 100000;
     pointer-events: none;
@@ -447,32 +460,18 @@
     text-decoration: underline;
 }
 
-/* Arrow for tooltip (pointing down) */
+/* Arrow — single rotated square, flush with tooltip body */
 .ceypay-tooltip::after {
     content: '';
     position: absolute;
-    bottom: -7px;
+    bottom: -5px;
     left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid #ffffff;
-}
-
-/* Arrow border for tooltip */
-.ceypay-tooltip::before {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-top: 7px solid #E2E8F0;
+    transform: translateX(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background: #ffffff;
+    border-right: 1px solid #E2E8F0;
+    border-bottom: 1px solid #E2E8F0;
 }
 
 /* --- Provider List --- */
@@ -999,11 +998,22 @@
     letter-spacing: 0.2px !important;
 }
 
+.ceypay-footer-version {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    font-size: 9px !important;
+    letter-spacing: 0.2px !important;
+}
+
 .ceypay-footer-logo {
     height: 11px !important;
     width: auto !important;
     opacity: 0.8 !important;
     display: block !important;
+}
+
+.ceypay-footer-brand {
+    cursor: default !important;
 }
 
 /* --- End of Styles --- */

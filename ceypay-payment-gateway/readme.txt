@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, crypto, bybit pay, binance pay
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.2.7
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,7 +16,7 @@ Accept crypto payments via Binance Pay, Bybit, and Bitazza on your WooCommerce s
 
 The plugin features a polished, responsive checkout modal that keeps customers on your site while they scan the QR code or use deep links on mobile devices.
 
-**[View Full Documentation](https://docs.ceypay.io/)**
+**[View Full Documentation](https://docs.ceypay.io/wordpress)**
 
 ### Key Features
 
@@ -59,7 +59,7 @@ No! This plugin only facilitates the payment request. All crypto transactions ha
 The order remains "Pending Payment". If they paid before closing, our webhook handler will still update the order status in the background.
 
 = Where can I find detailed documentation? =
-Visit our full documentation at [docs.ceypay.io](https://docs.ceypay.io/) for setup guides, troubleshooting, and API reference.
+Visit our full documentation at [docs.ceypay.io](https://docs.ceypay.io/wordpress) for setup guides, troubleshooting, and API reference.
 
 == Screenshots ==
 
@@ -68,30 +68,103 @@ Visit our full documentation at [docs.ceypay.io](https://docs.ceypay.io/) for se
 3.  **Mobile Experience:** "Open App" button for seamless mobile payments.
 4.  **Settings Panel:** Easy configuration in WooCommerce settings.
 
-== Privacy Policy ==
+== External Services ==
 
-This plugin connects to external services to process payments and optionally collect anonymous usage analytics.
+This plugin connects to external services to process payments, load fonts, and optionally collect anonymous usage analytics. Below is a detailed list of all external services used.
 
-= CeyPay API =
+= CeyPay Payment API (Required) =
 
-When a customer initiates a payment, this plugin sends order information (amount, currency, order ID) to the CeyPay payment processing API to generate QR codes and process transactions. This is required for the plugin to function.
+When a customer initiates a payment, this plugin sends order information to the CeyPay payment processing API to generate QR codes and process transactions. This is required for the plugin to function.
 
 * Service provider: CeyPay
+* Service URL: https://api.ceypay.io/ (production) and https://sandbox-api.ceypay.io/ (test mode)
 * Privacy policy: https://ceypay.io/privacy
-* Data sent: Order total, currency, merchant ID, transaction status
+* Terms of service: https://ceypay.io/legal/terms
+* Data sent: Order total, currency, order ID, merchant ID
+* When: Every time a customer initiates a CeyPay payment at checkout
+
+= CeyPay Error Reporting (Required) =
+
+This plugin sends error logs and diagnostic information to CeyPay servers to help identify and fix issues with the payment integration.
+
+* Service provider: CeyPay
+* Service URL: https://dev.ceylon.cash/ceypay/debugger/logs/report
+* Privacy policy: https://ceypay.io/privacy
+* Terms of service: https://ceypay.io/legal/terms
+* Data sent: Error messages, stack traces, plugin version, WordPress version, WooCommerce version
+* When: When an error occurs during payment processing
+* No customer personal data or payment details are included in error reports
+
+= Google Fonts (Required) =
+
+This plugin loads the Lato font from Google Fonts to ensure consistent typography in the payment modal.
+
+* Service provider: Google LLC
+* Service URL: https://fonts.googleapis.com/
+* Privacy policy: https://policies.google.com/privacy
+* Terms of service: https://policies.google.com/terms
+* Data sent: User's IP address (standard web request)
+* When: Every time the checkout page with CeyPay is loaded
 
 = Google Analytics (Optional) =
 
 If you enable the "Usage Analytics" option in settings, this plugin sends anonymous payment flow events to Google Analytics to help improve the plugin. This is **disabled by default** and requires explicit opt-in.
 
 * Service provider: Google LLC
+* Service URL: https://www.googletagmanager.com/ and https://www.google-analytics.com/
 * Privacy policy: https://policies.google.com/privacy
-* Data sent: Anonymous events (e.g., provider selection, payment completion rates)
+* Terms of service: https://policies.google.com/terms
+* Data sent: Anonymous events (e.g., provider selection, payment completion rates), merchant ID
+* When: On checkout and cart pages when analytics is enabled
 * No personal customer data or transaction amounts are collected
 
 To disable analytics, go to WooCommerce > Settings > Payments > CeyPay and uncheck "Enable usage analytics".
 
+= Facebook Pixel (Optional) =
+
+If you enable the "Usage Analytics" option in settings, this plugin uses Facebook Pixel to track checkout and purchase conversion events. This helps measure the effectiveness of the payment gateway. This is **disabled by default** and requires explicit opt-in.
+
+* Service provider: Meta Platforms, Inc.
+* Service URL: https://connect.facebook.net/ and https://www.facebook.com/tr
+* Privacy policy: https://www.facebook.com/privacy/policy/
+* Terms of service: https://www.facebook.com/legal/terms
+* Data sent: PageView event on all pages, InitiateCheckout event on checkout page, Purchase event with order total and currency on order confirmation page
+* When: On checkout and order confirmation pages when analytics is enabled
+
+To disable Facebook Pixel tracking, go to WooCommerce > Settings > Payments > CeyPay and uncheck "Enable usage analytics".
+
+== Privacy Policy ==
+
+For a summary of how this plugin handles user data, please refer to the "External Services" section above.
+
 == Changelog ==
+
+= 1.3.0 =
+*   Added branding toggle option in WooCommerce settings to show "Powered by CeyPay" in checkout modal.
+*   Added error reporting and in-memory storage for debugging.
+*   Improved AJAX handling to prevent "Leave site?" prompts and optimize performance.
+
+= 1.2.9 =
+*   Enhanced tooltips and added versioning support in CeyPay integration.
+
+= 1.2.8 =
+*   Enhanced sandbox mode with improved test mode badge styles and functionality.
+*   Updated plugin information metadata and banners.
+
+= 1.2.7 =
+*   Added test mode badges and alerts to checkout and payment modal.
+
+= 1.2.5 =
+*   Enhanced CeyPay Analytics integration with native WooCommerce fields for transaction IDs.
+*   Added HPOS compatibility declaration.
+
+= 1.2.4 =
+*   Added High-Performance Order Storage (HPOS) compatibility.
+*   Improved plugin metadata and banner information.
+
+= 1.2.3 =
+*   Initial stable release with production-ready features.
+*   Enhanced provider selection and checkout experience.
 
 = 1.2.1 =
 *   Added KuCoin Pay as a coming soon provider in the modal and classic block integration.

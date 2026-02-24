@@ -15,8 +15,83 @@ logging.basicConfig(level=logging.INFO)
 # Mock Secret Key for Webhook Signing
 WEBHOOK_SECRET = "mock_secret_key"
 
-# In-memory storage for orders
-orders = {}
+# In-memory storage for error reports
+error_reports = []
+
+@app.route('/errors/report', methods=['POST'])
+def report_error():
+    """
+    Endpoint to receive error reports from the WordPress plugin.
+    Stores error data in memory for debugging purposes.
+    """
+    try:
+        data = request.json
+
+        if not data:
+            return jsonify({"status": "error", "message": "No data provided"}), 400
+
+        # Validate required fields
+        required_fields = ['error', 'severity', 'source']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
+
+        # Generate error ID and timestamp
+        error_id = str(uuid.uuid4())
+        timestamp = datetime.utcnow().isoformat() + "Z"
+
+        # Create error report entry
+        error_report = {
+            "id": error_id,
+            "timestamp": timestamp,
+            "error": data['error'],
+            "severity": data['severity'],
+            "source": data['source'],
+            "context": data.get('context', {}),
+            "additional_data": data.get('additional_data', {}),
+            "user_agent": request.headers.get('User-Agent', ''),
+            "ip_address": request.remote_addr
+        }
+
+        # Store error report
+        error_reports.append(error_report)
+
+        app.logger.info(f"Error report received: {error_id} - {data['error']}")
+
+        return jsonify({
+            "status": "success",
+            "error_id": error_id,
+            "message": "Error report logged successfully"
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error processing error report: {e}")
+        return jsonify({"status": "error", "message": "Internal server error"}), 500
+
+@app.route('/errors', methods=['GET'])
+def get_error_reports():
+    """
+    Endpoint to retrieve error reports for debugging.
+    Supports pagination with limit parameter.
+    """
+    try:
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+
+        # Get paginated results
+        paginated_reports = error_reports[offset:offset + limit]
+
+        return jsonify({
+            "status": "success",
+            "count": len(error_reports),
+            "limit": limit,
+            "offset": offset,
+            "errors": paginated_reports
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error retrieving error reports: {e}")
+        return jsonify({"status": "error", "message": "Internal server error"}), 500
 
 # HTML Template for Admin Dashboard
 ADMIN_TEMPLATE = """
@@ -83,9 +158,9 @@ def admin_confirm(transaction_id):
     order = orders.get(transaction_id)
     if not order:
         return "Order not found", 404
-    
+
     order["status"] = "SUCCESS"
-    
+
     # Send Webhook if URL exists
     if order.get('webhook_url'):
         try:
@@ -98,20 +173,20 @@ def admin_confirm(transaction_id):
                 "currency": order["currency"],
                 "timestamp": datetime.utcnow().isoformat() + "Z"
             }
-            
+
             # Calculate Signature
             payload_json = json.dumps(payload)
             signature = hmac.new(
-                WEBHOOK_SECRET.encode('utf-8'), 
-                payload_json.encode('utf-8'), 
+                WEBHOOK_SECRET.encode('utf-8'),
+                payload_json.encode('utf-8'),
                 hashlib.sha256
             ).hexdigest()
-            
+
             headers = {
                 'Content-Type': 'application/json',
                 'X-CEYPAY-SIGNATURE': signature
             }
-            
+
             requests.post(order['webhook_url'], data=payload_json, headers=headers, timeout=5)
             app.logger.info(f"Webhook sent to {order['webhook_url']} with signature {signature}")
         except Exception as e:
@@ -123,19 +198,19 @@ def admin_confirm(transaction_id):
 def create_payment():
     data = request.json
     app.logger.info(f"Received payment request: {data}")
-    
+
     provider = data.get('provider', 'BINANCE')
     amount = data.get('amount', '0.00')
     currency = data.get('currency', 'USD')
     merchant_id = data.get('merchantId')
     webhook_url = data.get('webhookUrl')
-    
+
     # Generate a transaction ID (or use one from the request if provided)
     # In a real scenario, the plugin might send the WC Order ID
     # Let's assume the plugin sends 'order_id' or we generate one.
     # For now, we'll generate a unique ID for the transaction.
     transaction_id = str(uuid.uuid4())
-    
+
     # Store order status
     orders[transaction_id] = {
         "status": "PENDING",
@@ -145,7 +220,7 @@ def create_payment():
         "webhook_url": webhook_url,
         "created_at": str(uuid.uuid1()) # Simple timestamp proxy
     }
-    
+
     # Mock response
     response = {
         "id": transaction_id,
@@ -170,7 +245,7 @@ def create_payment():
         "lkrCeypayFeeAmount": 0,
         "lkrNetAmount": amount
     }
-    
+
     app.logger.info(f"Sending response: {response}")
     return jsonify(response), 201
 
@@ -179,7 +254,7 @@ def check_status(transaction_id):
     order = orders.get(transaction_id)
     if not order:
         return jsonify({"status": "NOT_FOUND"}), 404
-    
+
     return jsonify({"status": order["status"], "transactionId": transaction_id})
 
 @app.route('/pay/<transaction_id>', methods=['POST'])
@@ -187,7 +262,7 @@ def simulate_payment(transaction_id):
     order = orders.get(transaction_id)
     if not order:
         return jsonify({"status": "NOT_FOUND"}), 404
-    
+
     order["status"] = "SUCCESS"
     return jsonify({"status": "SUCCESS", "message": "Payment simulated"})
 
@@ -202,7 +277,7 @@ def get_webhook_public_key():
     mock_public_key = """-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAJrQLj5P/89iXES9+vFgrIy29clF9CC/oPPsw3c5D0bs=
 -----END PUBLIC KEY-----"""
-    
+
     app.logger.info("Webhook public key requested")
     return jsonify({"publicKey": mock_public_key.strip()})
 
@@ -212,28 +287,28 @@ def regenerate_webhook_secret():
     # auth_header = request.headers.get('Authorization')
     # if not auth_header:
     #     return jsonify({"message": "Unauthorized"}), 401
-    
+
     global WEBHOOK_SECRET
     WEBHOOK_SECRET = "new_secret_" + str(uuid.uuid4())
     app.logger.info(f"Regenerated Webhook Secret: {WEBHOOK_SECRET}")
-    
+
     return jsonify({"secret": WEBHOOK_SECRET})
 
 @app.route('/debug/telegram', methods=['POST'])
 def debug_telegram():
     data = request.json
     message = data.get('message', '')
-    
+
     bot_token = '8581816945:AAHaCnbMV2IzXIg-Fl2LEK_uUErbnbs6Odk'
     chat_id = '1076120105'
-    
+
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         'chat_id': chat_id,
         'text': message,
         'parse_mode': 'HTML'
     }
-    
+
     try:
         requests.post(url, json=payload, timeout=5)
         response = jsonify({"status": "sent"})
@@ -241,12 +316,12 @@ def debug_telegram():
         app.logger.error(f"Failed to send Telegram message: {e}")
         response = jsonify({"status": "error", "message": str(e)})
         response.status_code = 500
-    
+
     # Add CORS headers
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    
+
     return response
 
 @app.route('/debug/telegram', methods=['OPTIONS'])
@@ -265,5 +340,7 @@ if __name__ == '__main__':
     print("  POST /pay/<transaction_id>")
     print("  GET  /merchant/webhook-public-key")
     print("  POST /merchant/webhook-secret/regenerate")
+    print("  POST /errors/report")
+    print("  GET  /errors")
     print("  POST /debug/telegram")
     app.run(host='0.0.0.0', port=5000, debug=True)
