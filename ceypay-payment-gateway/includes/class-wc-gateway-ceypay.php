@@ -23,6 +23,12 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
      */
     public $api_url;
 
+    /**
+     * Logger instance.
+     * @var WC_Logger|null
+     */
+    private $logger = null;
+
     public function __construct()
     {
         $this->id                 = 'ceypay';
@@ -196,7 +202,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
         // Validate provider
         $allowed_providers = array('BINANCE', 'BYBIT', 'BITAZZA', 'KUCOIN');
-        if (! in_array($provider, $allowed_providers)) {
+        if (! in_array($provider, $allowed_providers, true)) {
             wp_send_json_error(array('message' => 'Invalid provider'));
         }
 
