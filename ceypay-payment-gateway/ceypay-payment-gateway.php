@@ -26,7 +26,14 @@ require_once dirname( __FILE__ ) . '/includes/ceypay-constants.php';
 
 // Make sure WooCommerce is active
 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Using core WordPress filter
-if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true ) ) {
+$active_plugins = (array) apply_filters( 'active_plugins', get_option( 'active_plugins', array() ) );
+
+if ( is_multisite() ) {
+    $network_active_plugins = array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) );
+    $active_plugins = array_unique( array_merge( $active_plugins, $network_active_plugins ) );
+}
+
+if ( ! in_array( 'woocommerce/woocommerce.php', $active_plugins, true ) ) {
     return;
 }
 
@@ -113,7 +120,10 @@ function ceypay_admin_notices() {
         return;
     }
 
-    $settings = get_option( 'woocommerce_ceypay_settings' );
+    $settings = get_option( 'woocommerce_ceypay_settings', array() );
+    if ( ! is_array( $settings ) ) {
+        $settings = array();
+    }
 
     // Check if enabled
     if ( ! isset( $settings['enabled'] ) || 'yes' !== $settings['enabled'] ) {
@@ -162,7 +172,7 @@ function ceypay_admin_scripts() {
         return;
     }
 
-    $settings = get_option( 'woocommerce_ceypay_settings' );
+    $settings = get_option( 'woocommerce_ceypay_settings', array() );
     if ( ! is_array( $settings ) ) {
         $settings = array();
     }
