@@ -2,9 +2,9 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: CeyPay Payment Gateway 1.1.2\n"
+"Project-Id-Version: CeyPay Payment Gateway 1.4.0\n"
 "Report-Msgid-Bugs-To: https://ceypay.io/\n"
-"POT-Creation-Date: 2024-12-27T00:00:00+00:00\n"
+"POT-Creation-Date: 2026-08-10T00:00:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12,133 +12,279 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Domain: ceypay-payment-gateway\n"
 
-#: ceypay-payment-gateway.php:125
-msgid "Action Needed: Complete CeyPay Setup"
-msgstr ""
 
-#: ceypay-payment-gateway.php:127
-msgid "Your CeyPay payment gateway is almost ready! To start accepting crypto payments, you must configure your <strong>Merchant ID</strong>."
-msgstr ""
-
-#: ceypay-payment-gateway.php:130
-msgid "Complete Setup Now"
-msgstr ""
-
-#: ceypay-payment-gateway.php:173
+#: ceypay-payment-gateway.php:272
 msgid "Action Needed"
 msgstr ""
 
+#: ceypay-payment-gateway.php:228
+msgid "Action Needed: Complete CeyPay Setup"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:460
+msgid "Analytics"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:509
+msgid "Awaiting CeyPay payment provider selection."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:116
+msgid "Back to providers"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:139
+msgid "By continuing, you agree to our"
+msgstr ""
+
+#: ceypay-payment-gateway.php:334
+#: ceypay-payment-gateway.php:335
 #: includes/class-wc-gateway-ceypay.php:37
 msgid "CeyPay"
 msgstr ""
 
+#: includes/class-wc-gateway-ceypay.php:110
+msgid "CeyPay QR code"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:98
+msgid "Choose your preferred payment method."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:117
+msgid "Close CeyPay modal"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:100
+msgid "Coming soon"
+msgstr ""
+
+#: ceypay-payment-gateway.php:233
+msgid "Complete Setup Now"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:128
+msgid "Connection error. Please try again."
+msgstr ""
+
+#: ceypay-payment-gateway.php:236
+msgid "Dismiss"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:429
+msgid "Enable CeyPay payment"
+msgstr ""
+
 #: includes/class-wc-gateway-ceypay.php:38
-msgid "Pay securely with CeyPay using digital currency balance on your favorite centralized exchange."
+msgid "Enable customers to pay using digital currency balances from supported centralized exchanges with CeyPay."
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:268
-msgid "Enable/Disable"
+#: includes/class-wc-gateway-ceypay.php:435
+msgid "Enable test mode"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:270
-msgid "Enable CeyPay Payment"
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:274
-msgid "Test Mode"
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:276
-msgid "Enable Test Mode"
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:278
-msgid "Place the gateway in test mode using test API keys."
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:282
-msgid "Description"
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:284
-msgid "Payment method description that the customer will see on your checkout."
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:285
-msgid "Pay securely with CeyPay using your digital currency balance on the Centralized exchange."
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:289
-msgid "Merchant ID"
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:291
-msgid "Your CeyPay Merchant ID."
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:296
-msgid "Webhook Secret"
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:298
-msgid "Secret key used to verify webhook signatures."
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:303
-msgid "Analytics"
-msgstr ""
-
-#: includes/class-wc-gateway-ceypay.php:305
+#: includes/class-wc-gateway-ceypay.php:462
 msgid "Enable usage analytics"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:306
+#: includes/class-wc-gateway-ceypay.php:427
+msgid "Enable/Disable"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:126
+msgid "Error"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:129
+msgid "Error generating QR code"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:130
+msgid "Failed to refresh QR code"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:463
 msgid "Help improve CeyPay by sharing anonymous payment flow data (e.g., provider selection, QR interactions, completion rates). No personal information, transaction amounts, or customer data is collected. Data is sent to Google Analytics."
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:364
-msgid "Awaiting CeyPay payment provider selection."
+#: includes/class-wc-gateway-ceypay.php:133
+msgid "Leave site?"
 msgstr ""
 
-#. translators: %s: payment provider name
-#: includes/class-wc-gateway-ceypay.php:413
-msgid "Pay with %s"
+#: includes/class-wc-gateway-ceypay.php:441
+msgid "Merchant ID"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:414
-msgid "Please scan the QR code below to complete your payment."
+#. translators: %s: support email address
+#: includes/class-wc-gateway-ceypay.php:141
+msgid "Need some help?<br>Reach %s"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:420
-msgid "Waiting for payment..."
-msgstr ""
-
-#. translators: %s: payment provider name
-#: includes/class-wc-gateway-ceypay.php:424
+#. translators: %s: Payment provider name (e.g., Binance, Bybit)
+#: includes/class-wc-gateway-ceypay.php:581
 msgid "Open %s App"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:489
-msgid "Payment confirmed via CeyPay."
+#. translators: %s: payment provider name, e.g. Binance
+#: includes/class-wc-gateway-ceypay.php:112
+msgid "Open %s app"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:548
-msgid "Payment simulated via Test Mode."
+#. translators: %s: payment provider name, e.g. Binance
+#: includes/class-wc-gateway-ceypay.php:113
+msgid "Open app"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:635
-msgid "Payment confirmed via CeyPay Webhook."
+#: includes/class-wc-gateway-ceypay.php:123
+msgid "Paid! Redirecting..."
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:677
-msgid "Payment is under user review via CeyPay."
+#. translators: %s: payment provider name, e.g. Binance
+#: includes/class-wc-gateway-ceypay.php:108
+msgid "Pay"
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:701
+#: includes/class-wc-gateway-ceypay-blocks-support.php:70
+#: includes/class-wc-gateway-ceypay.php:46
+msgid "Pay securely with CeyPay using digital currency balance on your favorite CEX."
+msgstr ""
+
+#. translators: %s: payment provider name, e.g. Binance
+#: includes/class-wc-gateway-ceypay.php:106
+#: includes/class-wc-gateway-ceypay.php:569
+msgid "Pay with %s"
+msgstr ""
+
+#. translators: %s: exchange name, e.g. Binance
+#: includes/class-wc-gateway-ceypay.php:102
+msgid "Pay with crypto via %s"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:975
 msgid "Payment QR code expired via CeyPay. User can refresh to try again."
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:723
+#: includes/class-wc-gateway-ceypay.php:910
+msgid "Payment confirmed via CeyPay Webhook."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:644
+msgid "Payment confirmed via CeyPay."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:996
 msgid "Payment failed via CeyPay Webhook."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:952
+msgid "Payment is under user review via CeyPay."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:697
+msgid "Payment simulated via Test Mode."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:437
+msgid "Place the gateway in test mode using test API keys."
+msgstr ""
+
+#. translators: %s: Payment provider name (e.g., Binance, Bybit)
+#: includes/class-wc-gateway-ceypay.php:570
+msgid "Please scan the QR code below to complete your payment."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:495
+msgid "Please select a payment provider."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:136
+msgid "Powered by"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:138
+msgid "Privacy Policy"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:122
+msgid "Processing..."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:118
+msgid "Refresh QR code"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:119
+msgid "Refreshing..."
+msgstr ""
+
+#. translators: %s: payment provider name, e.g. Binance
+#: includes/class-wc-gateway-ceypay.php:107
+msgid "Scan the QR or open your app to finish checkout."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:97
+msgid "Select provider"
+msgstr ""
+
+#: ceypay-payment-gateway.php:358
+msgid "Settings"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:450
+msgid "Show \"Powered by CeyPay\" in the checkout modal"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:448
+msgid "Show branding"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:451
+msgid "Show you're a part of the crypto payments movement with a small CeyPay badge in the checkout modal."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:120
+msgid "Simulate success (test mode)"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:121
+msgid "Simulating..."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:132
+msgid "Simulation error."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:131
+msgid "Simulation failed: "
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:137
+msgid "Terms of Service"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:433
+msgid "Test mode"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:99
+msgid "Test mode active: No real funds will be deducted."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:127
+msgid "Unknown error"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:109
+#: includes/class-wc-gateway-ceypay.php:576
+msgid "Waiting for payment..."
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:443
+msgid "Your CeyPay Merchant ID."
+msgstr ""
+
+#: ceypay-payment-gateway.php:230
+msgid "Your CeyPay payment gateway is almost ready! To start accepting crypto payments, you must configure your <strong>Merchant ID</strong>."
 msgstr ""

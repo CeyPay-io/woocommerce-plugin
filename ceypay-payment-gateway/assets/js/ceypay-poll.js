@@ -1,4 +1,11 @@
 jQuery(document).ready(function($) {
+    // Translated strings, supplied by wp_localize_script(). English fallbacks
+    // keep the fallback receipt page working if a key is missing.
+    function t(key, fallback) {
+        var strings = (window.ceypay_params && ceypay_params.i18n) || {};
+        return strings[key] || fallback;
+    }
+
     var transactionId = ceypay_params.transaction_id;
     var statusUrl = ceypay_params.status_url;
     var successUrl = ceypay_params.success_url;
@@ -33,7 +40,7 @@ jQuery(document).ready(function($) {
     $('#ceypay-simulate-success').on('click', function(e) {
         e.preventDefault();
         var $btn = $(this);
-        $btn.text('Processing...');
+        $btn.text(t('processing', 'Processing...'));
         
         $.ajax({
             url: ceypay_params.ajax_url,
@@ -46,14 +53,14 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    $btn.text('Paid! Redirecting...');
+                    $btn.text(t('paid_redirecting', 'Paid! Redirecting...'));
                     // The poller will catch the status change, or we can redirect immediately
                     setTimeout(function() {
                         window.location.href = successUrl;
                     }, 1000);
                 } else {
-                    $btn.text('Error');
-                    alert('Simulation failed: ' + (response.data ? response.data.message : 'Unknown error'));
+                    $btn.text(t('error', 'Error'));
+                    alert(t('simulation_failed', 'Simulation failed: ') + (response.data ? response.data.message : t('unknown_error', 'Unknown error')));
                 }
             }
         });

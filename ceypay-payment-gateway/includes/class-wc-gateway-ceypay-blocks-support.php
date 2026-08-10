@@ -38,6 +38,7 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
             'assets_url'    => CEYPAY_PLUGIN_URL . 'assets/',
             'version'       => CEYPAY_VERSION,
             'show_branding' => 'yes' === $this->get_setting( 'show_branding' ) ? '1' : '0',
+            'i18n'          => WC_Gateway_CeyPay::get_i18n_strings(),
         ) );
 
         // Enqueue Styles

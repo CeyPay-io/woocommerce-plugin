@@ -68,6 +68,7 @@ run_blueprint() {
 
 run_blueprint "build-integrity" "smoke.json"          "SMOKE_RESULT.txt" "STATUS=ALL_PASS"
 run_blueprint "ajax-ownership"  "ajax-ownership.json" "SMOKE_AJAX.txt"   "AJAX_STATUS=ALL_PASS"
+run_blueprint "status-endpoint" "status-endpoint.json" "SMOKE_STATUS.txt" "POLL_STATUS=ALL_PASS"
 
 echo
 if [ "$FAILED" -ne 0 ]; then

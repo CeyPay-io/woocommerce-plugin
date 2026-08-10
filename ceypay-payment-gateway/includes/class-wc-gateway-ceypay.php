@@ -78,6 +78,71 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     }
 
     /**
+     * Translatable strings used by the checkout modal.
+     *
+     * The modal is built in JavaScript, so its copy cannot go through __() at
+     * render time. Passing the translated strings through wp_localize_script()
+     * keeps every customer-facing string in the .pot file.
+     *
+     * Shared by the classic and Blocks checkout paths so there is one
+     * definition. Provider names (Binance Pay, Bybit Pay, KuCoin Pay) are
+     * deliberately absent -- they are brand names and are not translated.
+     *
+     * @return array
+     */
+    public static function get_i18n_strings()
+    {
+        return array(
+            // Provider selection view.
+            'select_provider'   => __('Select provider', 'ceypay-payment-gateway'),
+            'choose_method'     => __('Choose your preferred payment method.', 'ceypay-payment-gateway'),
+            'test_mode_active'  => __('Test mode active: No real funds will be deducted.', 'ceypay-payment-gateway'),
+            'coming_soon'       => __('Coming soon', 'ceypay-payment-gateway'),
+            /* translators: %s: exchange name, e.g. Binance */
+            'pay_via'           => __('Pay with crypto via %s', 'ceypay-payment-gateway'),
+
+            // QR view.
+            /* translators: %s: payment provider name, e.g. Binance */
+            'pay_with'          => __('Pay with %s', 'ceypay-payment-gateway'),
+            'scan_instruction'  => __('Scan the QR or open your app to finish checkout.', 'ceypay-payment-gateway'),
+            'pay_label'         => __('Pay', 'ceypay-payment-gateway'),
+            'waiting_payment'   => __('Waiting for payment...', 'ceypay-payment-gateway'),
+            'qr_code_alt'       => __('CeyPay QR code', 'ceypay-payment-gateway'),
+            /* translators: %s: payment provider name, e.g. Binance */
+            'open_app'          => __('Open %s app', 'ceypay-payment-gateway'),
+            'open_app_generic'  => __('Open app', 'ceypay-payment-gateway'),
+
+            // Actions and controls.
+            'back_to_providers' => __('Back to providers', 'ceypay-payment-gateway'),
+            'close_modal'       => __('Close CeyPay modal', 'ceypay-payment-gateway'),
+            'refresh_qr'        => __('Refresh QR code', 'ceypay-payment-gateway'),
+            'refreshing'        => __('Refreshing...', 'ceypay-payment-gateway'),
+            'simulate_success'  => __('Simulate success (test mode)', 'ceypay-payment-gateway'),
+            'simulating'        => __('Simulating...', 'ceypay-payment-gateway'),
+            'processing'        => __('Processing...', 'ceypay-payment-gateway'),
+            'paid_redirecting'  => __('Paid! Redirecting...', 'ceypay-payment-gateway'),
+
+            // Errors.
+            'error'             => __('Error', 'ceypay-payment-gateway'),
+            'unknown_error'     => __('Unknown error', 'ceypay-payment-gateway'),
+            'connection_error'  => __('Connection error. Please try again.', 'ceypay-payment-gateway'),
+            'qr_generate_error' => __('Error generating QR code', 'ceypay-payment-gateway'),
+            'qr_refresh_error'  => __('Failed to refresh QR code', 'ceypay-payment-gateway'),
+            'simulation_failed' => __('Simulation failed: ', 'ceypay-payment-gateway'),
+            'simulation_error'  => __('Simulation error.', 'ceypay-payment-gateway'),
+            'leave_site'        => __('Leave site?', 'ceypay-payment-gateway'),
+
+            // Footer.
+            'powered_by'        => __('Powered by', 'ceypay-payment-gateway'),
+            'terms_of_service'  => __('Terms of Service', 'ceypay-payment-gateway'),
+            'privacy_policy'    => __('Privacy Policy', 'ceypay-payment-gateway'),
+            'by_continuing'     => __('By continuing, you agree to our', 'ceypay-payment-gateway'),
+            /* translators: %s: support email address */
+            'need_help'         => __('Need some help?<br>Reach %s', 'ceypay-payment-gateway'),
+        );
+    }
+
+    /**
      * Enqueue styles and scripts for checkout page
      */
     public function enqueue_checkout_styles()
@@ -106,6 +171,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                 'assets_url'    => CEYPAY_PLUGIN_URL . 'assets/',
                 'version'       => CEYPAY_VERSION,
                 'show_branding' => 'yes' === $this->get_option('show_branding') ? '1' : '0',
+                'i18n'          => self::get_i18n_strings(),
             ));
         }
     }
@@ -495,6 +561,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                 'order_key'      => $order->get_order_key(),
                 'success_url'    => $this->get_return_url($order),
                 'status_url'     => trailingslashit($this->api_url) . 'payment/' . rawurlencode($transaction_id) . '/status',
+                'i18n'           => self::get_i18n_strings(),
             ));
 
             echo '<div class="ceypay-payment-instructions" style="text-align:center; margin: 20px 0; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9;">';

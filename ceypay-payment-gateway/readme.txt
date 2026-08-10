@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, cryptocurrency, qr payment, checkout
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -90,57 +90,68 @@ For a summary of how this plugin handles user data, please refer to the "Externa
 
 == Changelog ==
 
-= 1.4.0 =
-*   Security: payment status and QR endpoints now verify the order key, so order details can no longer be read or payment confirmed by guessing an order ID.
-*   Security: payment confirmation now uses the transaction recorded against the order instead of a value supplied by the browser.
-*   Removed all third-party analytics and tracking. The plugin no longer loads Google Analytics, Meta Pixel, or remote fonts, and the "Enable usage analytics" setting has been removed.
-*   The setup notice is now dismissible and only appears on the Plugins and WooCommerce settings screens.
-*   Updated tested-up-to metadata for WordPress 7.0 and WooCommerce 11.0.
+= 2026-8-11 - v1.3.2 =
+* adds full translation support for the checkout modal
+* adds a Settings link on the Plugins screen
+* fix: payment status checks now use the dedicated status endpoint and validate the response code, so failed checks no longer leave orders stuck
 
-= 1.3.0 =
-*   Added branding toggle option in WooCommerce settings to show "Powered by CeyPay" in checkout modal.
-*   Added error reporting and in-memory storage for debugging.
-*   Improved AJAX handling to prevent "Leave site?" prompts and optimize performance.
+= 2026-8-10 - v1.3.1 =
+* security: checkout endpoints now verify the order key, so order details can no longer be read and payment can no longer be confirmed by guessing an order ID
+* security: payment confirmation uses the transaction recorded against the order instead of a value supplied by the browser
+* security: refund IDs are rejected instead of triggering a server error
+* security: test-mode payment simulation now requires an administrator
+* fix: fatal error that could take down stores using the Blocks checkout
+* fix: JavaScript error on every QR code display
+* fix: WooCommerce "unregistered script" warnings caused by unnormalised asset URLs
+* smoother modal resizing between provider selection and QR display
+* the setup notice is now dismissible
+* removes unused debug code
+* tested with WordPress 7.0 and WooCommerce 11.0
 
-= 1.2.9 =
-*   Enhanced tooltips and added versioning support in CeyPay integration.
+= 2026-2-24 - v1.3.0 =
+* adds branding toggle to show "Powered by CeyPay" in the checkout modal
+* adds error reporting and in-memory storage for debugging
+* improves AJAX handling to prevent "Leave site?" prompts
 
-= 1.2.8 =
-*   Enhanced sandbox mode with improved test mode badge styles and functionality.
-*   Updated plugin information metadata and banners.
+= 2026-1-29 - v1.2.9 =
+* enhances tooltips and adds versioning support
 
-= 1.2.7 =
-*   Added test mode badges and alerts to checkout and payment modal.
+= 2026-1-28 - v1.2.8 =
+* enhances sandbox mode with improved test mode badge styles
+* updates plugin metadata and banners
 
-= 1.2.5 =
-*   Enhanced CeyPay Analytics integration with native WooCommerce fields for transaction IDs.
-*   Added HPOS compatibility declaration.
+= 2026-1-27 - v1.2.7 =
+* adds test mode badges and alerts to checkout and payment modal
 
-= 1.2.4 =
-*   Added High-Performance Order Storage (HPOS) compatibility.
-*   Improved plugin metadata and banner information.
+= 2026-1-26 - v1.2.5 =
+* enhances analytics integration with native WooCommerce transaction ID fields
+* adds HPOS compatibility declaration
 
-= 1.2.3 =
-*   Initial stable release with production-ready features.
-*   Enhanced provider selection and checkout experience.
+= 2026-1-26 - v1.2.4 =
+* adds High-Performance Order Storage (HPOS) compatibility
+* improves plugin metadata and banner information
 
-= 1.2.1 =
-*   Added KuCoin Pay as a coming soon provider in the modal and classic block integration.
-*   Redesigned the classic block provider chips to a minimal, pill-style layout for consistency.
+= 2026-1-26 - v1.2.3 =
+* initial stable release with production-ready features
+* enhances provider selection and checkout experience
 
-= 1.0.3 =
-*   Fixed direct file access protection format for Plugin Check compliance.
+= 2026-1-26 - v1.2.1 =
+* adds KuCoin Pay as a coming soon provider in the modal and classic block integration
+* redesigns the classic block provider chips to a minimal, pill-style layout
 
-= 1.0.2 =
-*   Fixed direct file access protection placement for Plugin Check compliance.
+= 2026-1-26 - v1.0.3 =
+* fixes direct file access protection format for Plugin Check compliance
 
-= 1.0.1 =
-*   Improved security with proper input sanitization and escaping.
-*   Added WordPress coding standards compliance.
-*   Fixed internationalization with translator comments.
+= 2026-1-26 - v1.0.2 =
+* fixes direct file access protection placement for Plugin Check compliance
 
-= 1.0.0 =
-*   Initial release.
-*   Added support for Binance Pay, Bybit, and Bitazza.
-*   Implemented QR code modal with polling and webhooks.
-*   Added Test Mode with simulation capabilities.
+= 2026-1-26 - v1.0.1 =
+* improves security with proper input sanitization and escaping
+* adds WordPress coding standards compliance
+* fixes internationalization with translator comments
+
+= 2026-1-26 - v1.0.0 =
+* initial release
+* adds support for Binance Pay, Bybit Pay and Bitazza
+* implements QR code modal with polling and webhooks
+* adds Test Mode with simulation capabilities

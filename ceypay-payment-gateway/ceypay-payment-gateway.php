@@ -3,7 +3,7 @@
  * Plugin Name: CeyPay Payment Gateway
  * Plugin URI:  https://docs.ceypay.io/wordpress
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.4.0
+ * Version:     1.3.2
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
@@ -295,3 +295,71 @@ function ceypay_admin_scripts() {
     }
 }
 add_action( 'admin_enqueue_scripts', 'ceypay_admin_scripts' );
+
+/**
+ * Register a CeyPay entry in the WooCommerce admin sidebar.
+ *
+ * Without this the gateway is only reachable by digging into
+ * WooCommerce > Settings > Payments > CeyPay. This surfaces it alongside the
+ * other WooCommerce sections, which is where merchants look for it.
+ *
+ * Deliberately uses add_menu_page() rather than wc_admin_register_page():
+ * the latter registers a route inside the WooCommerce Admin React app and
+ * rewrites the target into `page=wc-admin&path=...`, which mangles a link to a
+ * classic settings screen. Our settings live in the classic Payments tab, so
+ * pointing a plain menu entry straight at it is both correct and free of any
+ * dependency on WooCommerce Admin being enabled.
+ *
+ * Position 56 places it directly beneath WooCommerce's own Payments entry.
+ */
+function ceypay_register_admin_page() {
+    // The CeyPay symbol. Filled with the admin menu's own icon grey rather
+    // than brand blue, so it sits correctly alongside the other menu icons --
+    // WordPress does not recolour data-URI icons, it only sizes them.
+    // The class/<style> block from the source file is inlined as a fill
+    // attribute because WordPress strips <style> from data-URI backgrounds.
+    $icon = 'data:image/svg+xml;base64,' . base64_encode(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 585.19 585.19">'
+        . '<path fill="#a7aaad" d="M290.94,0C143.44,0,21.31,107.94,0,248.71h89.84'
+        . 'c20.22-92,102.51-160.93,201.1-160.93s180.88,68.93,201.1,160.93h-91.95'
+        . 'c-17.45-42.92-59.73-73.15-109.15-73.15-65,0-117.7,52.4-117.7,117.04'
+        . 's52.7,117.04,117.7,117.04c49.39,0,91.68-30.27,109.15-73.15h91.95'
+        . 'c-20.22,92-102.51,160.93-201.1,160.93s-180.88-68.93-201.1-160.93H0'
+        . 'c21.31,140.76,143.44,248.71,290.94,248.71,162.51,0,294.25-131,294.25-292.6'
+        . 'S453.45,0,290.94,0h0Z"/>'
+        . '</svg>'
+    );
+
+    add_menu_page(
+        __( 'CeyPay', 'ceypay-payment-gateway' ),
+        __( 'CeyPay', 'ceypay-payment-gateway' ),
+        'manage_woocommerce',
+        'admin.php?page=wc-settings&tab=checkout&section=ceypay',
+        '',
+        $icon,
+        56
+    );
+}
+add_action( 'admin_menu', 'ceypay_register_admin_page', 20 );
+
+/**
+ * Add a Settings link on the Plugins screen.
+ *
+ * Standard convention -- it saves merchants hunting through WooCommerce
+ * settings right after activating.
+ *
+ * @param array $links Existing action links.
+ * @return array
+ */
+function ceypay_plugin_action_links( $links ) {
+    $settings_link = sprintf(
+        '<a href="%s">%s</a>',
+        esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ceypay' ) ),
+        esc_html__( 'Settings', 'ceypay-payment-gateway' )
+    );
+
+    array_unshift( $links, $settings_link );
+
+    return $links;
+}
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'ceypay_plugin_action_links' );
