@@ -1,18 +1,18 @@
 === CeyPay Payment Gateway ===
 Contributors: ceypay
-Tags: woocommerce, payment gateway, crypto, bybit pay, binance pay
-Requires at least: 5.8
-Tested up to: 6.9
+Tags: woocommerce, payment gateway, cryptocurrency, qr payment, checkout
+Requires at least: 6.5
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Accept crypto payments via Binance Pay, Bybit, and Bitazza on your WooCommerce store with a seamless QR checkout.
+Accept crypto payments via Binance Pay, Bybit Pay and KuCoin Pay on your WooCommerce store with a seamless QR checkout.
 
 == Description ==
 
-**CeyPay Payment Gateway** allows your WooCommerce store to accept cryptocurrency payments effortlessly. We support major providers including **Binance Pay**, **Bybit**, and **Bitazza**, offering your customers a flexible and modern payment experience.
+**CeyPay Payment Gateway** allows your WooCommerce store to accept cryptocurrency payments effortlessly. We support major providers including **Binance Pay**, **Bybit Pay** and **KuCoin Pay**, letting your customers pay from their existing exchange balance.
 
 The plugin features a polished, responsive checkout modal that keeps customers on your site while they scan the QR code or use deep links on mobile devices.
 
@@ -20,7 +20,7 @@ The plugin features a polished, responsive checkout modal that keeps customers o
 
 ### Key Features
 
-*   **Multi-Provider Support:** Let customers choose between Binance Pay, Bybit, or Bitazza at checkout.
+*   **Multi-Provider Support:** Let customers choose between Binance Pay, Bybit Pay and KuCoin Pay at checkout, with more providers on the way.
 *   **Seamless UX:** A modern, card-grid style provider selection and a clean, modal-based QR checkout.
 *   **Mobile Optimized:** Automatically detects mobile devices and triggers deep links to open the relevant crypto app.
 *   **Real-time Status:** Built-in polling and webhook support ensure orders are marked as "Processing" instantly upon payment.
@@ -50,7 +50,7 @@ The plugin features a polished, responsive checkout modal that keeps customers o
 Yes, you need a valid Merchant ID from CeyPay to process live payments.
 
 = Which cryptocurrencies are supported? =
-Support depends on the provider (Binance, Bybit, Bitazza). Generally, major coins like USDT, BTC, and ETH are supported.
+Support depends on the exchange (Binance, Bybit, KuCoin). Generally, major coins like USDT, BTC, and ETH are supported.
 
 = Does this plugin store private keys? =
 No! This plugin only facilitates the payment request. All crypto transactions happen securely within the provider's app or platform.
@@ -70,7 +70,7 @@ Visit our full documentation at [docs.ceypay.io](https://docs.ceypay.io/wordpres
 
 == External Services ==
 
-This plugin connects to external services to process payments, load fonts, and optionally collect anonymous usage analytics. Below is a detailed list of all external services used.
+This plugin connects to one external service, required to process payments. It does not load third-party fonts or scripts, and it does not collect analytics.
 
 = CeyPay Payment API (Required) =
 
@@ -80,64 +80,22 @@ When a customer initiates a payment, this plugin sends order information to the 
 * Service URL: https://api.ceypay.io/ (production) and https://sandbox-api.ceypay.io/ (test mode)
 * Privacy policy: https://ceypay.io/privacy
 * Terms of service: https://ceypay.io/legal/terms
-* Data sent: Order total, currency, order ID, merchant ID
-* When: Every time a customer initiates a CeyPay payment at checkout
-
-= CeyPay Error Reporting (Required) =
-
-This plugin sends error logs and diagnostic information to CeyPay servers to help identify and fix issues with the payment integration.
-
-* Service provider: CeyPay
-* Service URL: https://dev.ceylon.cash/ceypay/debugger/logs/report
-* Privacy policy: https://ceypay.io/privacy
-* Terms of service: https://ceypay.io/legal/terms
-* Data sent: Error messages, stack traces, plugin version, WordPress version, WooCommerce version
-* When: When an error occurs during payment processing
-* No customer personal data or payment details are included in error reports
-
-= Google Fonts (Required) =
-
-This plugin loads the Lato font from Google Fonts to ensure consistent typography in the payment modal.
-
-* Service provider: Google LLC
-* Service URL: https://fonts.googleapis.com/
-* Privacy policy: https://policies.google.com/privacy
-* Terms of service: https://policies.google.com/terms
-* Data sent: User's IP address (standard web request)
-* When: Every time the checkout page with CeyPay is loaded
-
-= Google Analytics (Optional) =
-
-If you enable the "Usage Analytics" option in settings, this plugin sends anonymous payment flow events to Google Analytics to help improve the plugin. This is **disabled by default** and requires explicit opt-in.
-
-* Service provider: Google LLC
-* Service URL: https://www.googletagmanager.com/ and https://www.google-analytics.com/
-* Privacy policy: https://policies.google.com/privacy
-* Terms of service: https://policies.google.com/terms
-* Data sent: Anonymous events (e.g., provider selection, payment completion rates), merchant ID
-* When: On checkout and cart pages when analytics is enabled
-* No personal customer data or transaction amounts are collected
-
-To disable analytics, go to WooCommerce > Settings > Payments > CeyPay and uncheck "Enable usage analytics".
-
-= Facebook Pixel (Optional) =
-
-If you enable the "Usage Analytics" option in settings, this plugin uses Facebook Pixel to track checkout and purchase conversion events. This helps measure the effectiveness of the payment gateway. This is **disabled by default** and requires explicit opt-in.
-
-* Service provider: Meta Platforms, Inc.
-* Service URL: https://connect.facebook.net/ and https://www.facebook.com/tr
-* Privacy policy: https://www.facebook.com/privacy/policy/
-* Terms of service: https://www.facebook.com/legal/terms
-* Data sent: PageView event on all pages, InitiateCheckout event on checkout page, Purchase event with order total and currency on order confirmation page
-* When: On checkout and order confirmation pages when analytics is enabled
-
-To disable Facebook Pixel tracking, go to WooCommerce > Settings > Payments > CeyPay and uncheck "Enable usage analytics".
+* Data sent: Merchant ID, order number, order total and currency, the name of each item in the order, and the customer's billing details (first and last name, email address, phone number, street address, city, postal code and country)
+* When: Every time a customer selects a payment provider at checkout, and when the resulting payment status is polled
+* Also sent: The store's webhook callback URL, so CeyPay can notify the site when payment completes
 
 == Privacy Policy ==
 
 For a summary of how this plugin handles user data, please refer to the "External Services" section above.
 
 == Changelog ==
+
+= 1.4.0 =
+*   Security: payment status and QR endpoints now verify the order key, so order details can no longer be read or payment confirmed by guessing an order ID.
+*   Security: payment confirmation now uses the transaction recorded against the order instead of a value supplied by the browser.
+*   Removed all third-party analytics and tracking. The plugin no longer loads Google Analytics, Meta Pixel, or remote fonts, and the "Enable usage analytics" setting has been removed.
+*   The setup notice is now dismissible and only appears on the Plugins and WooCommerce settings screens.
+*   Updated tested-up-to metadata for WordPress 7.0 and WooCommerce 11.0.
 
 = 1.3.0 =
 *   Added branding toggle option in WooCommerce settings to show "Powered by CeyPay" in checkout modal.

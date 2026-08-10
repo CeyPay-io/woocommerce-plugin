@@ -3,22 +3,37 @@
  * Plugin Name: CeyPay Payment Gateway
  * Plugin URI:  https://docs.ceypay.io/wordpress
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.3.0
+ * Version:     1.4.0
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
  * Domain Path: /languages
- * Requires at least: 5.8
+ * Requires at least: 6.5
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
- * WC requires at least: 7.0
- * WC tested up to: 9.4
+ * WC requires at least: 7.1
+ * WC tested up to: 11.0
  * License:     GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
+}
+
+// Plugin root paths. Asset URLs must be built from these rather than with
+// plugins_url( '../assets/...', __FILE__ ) from inside includes/, which yields
+// an unnormalised ".../includes/../assets/..." URL. Browsers collapse that
+// before WooCommerce's dependency detection can match it against the
+// registered script URL, producing spurious "Unregistered script" warnings.
+if ( ! defined( 'CEYPAY_PLUGIN_FILE' ) ) {
+    define( 'CEYPAY_PLUGIN_FILE', __FILE__ );
+}
+if ( ! defined( 'CEYPAY_PLUGIN_URL' ) ) {
+    define( 'CEYPAY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+if ( ! defined( 'CEYPAY_PLUGIN_DIR' ) ) {
+    define( 'CEYPAY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
 
 // Load constants (including GA4 Measurement ID)
@@ -35,6 +50,18 @@ if ( is_multisite() ) {
 
 if ( ! in_array( 'woocommerce/woocommerce.php', $active_plugins, true ) ) {
     return;
+}
+
+/**
+ * Whether the optional analytics module is bundled in this build.
+ *
+ * The WordPress.org build ships without it, so every analytics touchpoint
+ * (script dependencies, settings field, event calls) must check this first.
+ *
+ * @return bool
+ */
+function ceypay_has_analytics() {
+    return class_exists( 'CeyPay_Analytics' );
 }
 
 /**
@@ -56,9 +83,12 @@ function ceypay_init_gateway_class() {
 
     include_once dirname( __FILE__ ) . '/includes/class-wc-gateway-ceypay.php';
 
-    // Load Analytics Handler
-    require_once dirname( __FILE__ ) . '/includes/class-ceypay-analytics.php';
-    CeyPay_Analytics::get_instance();
+    // Load the optional Analytics Handler. Absent from the WordPress.org build.
+    $ceypay_analytics_file = dirname( __FILE__ ) . '/includes/class-ceypay-analytics.php';
+    if ( file_exists( $ceypay_analytics_file ) ) {
+        require_once $ceypay_analytics_file;
+        CeyPay_Analytics::get_instance();
+    }
 
     // Only instantiate the gateway during CeyPay-specific AJAX actions to register hooks.
     // For WooCommerce AJAX actions (e.g., update_order_review), WC instantiates gateways itself.
@@ -101,10 +131,60 @@ function ceypay_register_blocks_support() {
 add_action( 'woocommerce_blocks_loaded', 'ceypay_register_blocks_support' );
 
 /**
+ * Handle dismissal of the setup notice.
+ *
+ * Stored per user so the notice stays dismissed across page loads, rather than
+ * only for the current request.
+ */
+function ceypay_dismiss_admin_notice() {
+    if ( ! isset( $_GET['ceypay_dismiss_setup_notice'] ) ) {
+        return;
+    }
+
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    $nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+    if ( ! wp_verify_nonce( $nonce, 'ceypay_dismiss_setup_notice' ) ) {
+        return;
+    }
+
+    update_user_meta( get_current_user_id(), 'ceypay_setup_notice_dismissed', 1 );
+
+    wp_safe_redirect( remove_query_arg( array( 'ceypay_dismiss_setup_notice', '_wpnonce' ) ) );
+    exit;
+}
+add_action( 'admin_init', 'ceypay_dismiss_admin_notice' );
+
+/**
  * Admin Notice for Missing Configuration
+ *
+ * Scoped to the Plugins screen and WooCommerce settings, and dismissible, so it
+ * does not follow the user around the admin (WordPress.org guideline 11).
  */
 function ceypay_admin_notices() {
     if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    if ( get_user_meta( get_current_user_id(), 'ceypay_setup_notice_dismissed', true ) ) {
+        return;
+    }
+
+    // Limit to the screens where acting on this notice makes sense. This fires
+    // only when the gateway is enabled with no Merchant ID -- checkout is
+    // broken -- so the Dashboard is included deliberately: that is where an
+    // admin lands on login, and a store silently unable to take payment is
+    // worth interrupting for. The notice is dismissible, so it does not nag.
+    $screen = get_current_screen();
+    $screens = array(
+        'dashboard',                    // where admins land on login
+        'plugins',                      // right after activating
+        'woocommerce_page_wc-admin',    // WooCommerce Home
+        'woocommerce_page_wc-settings', // WooCommerce Settings
+    );
+    if ( ! $screen || ! in_array( $screen->id, $screens, true ) ) {
         return;
     }
 
@@ -134,8 +214,12 @@ function ceypay_admin_notices() {
 
     if ( empty( $merchant_id ) ) {
         $settings_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ceypay' );
+        $dismiss_url  = wp_nonce_url(
+            add_query_arg( 'ceypay_dismiss_setup_notice', '1' ),
+            'ceypay_dismiss_setup_notice'
+        );
         ?>
-        <div class="notice notice-error" style="border-left: 4px solid #1C6EF5; padding: 20px; margin-top: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+        <div class="notice notice-error is-dismissible" style="border-left: 4px solid #1C6EF5; padding: 20px; margin-top: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
             <div style="display: flex; align-items: center;">
                 <div style="margin-right: 20px;">
                     <img src="<?php echo esc_url( plugins_url( 'assets/images/ceypay-symbol.png', __FILE__ ) ); ?>" style="height: 60px; width: auto;" alt="CeyPay">
@@ -147,6 +231,9 @@ function ceypay_admin_notices() {
                     </p>
                     <a href="<?php echo esc_url( $settings_url ); ?>" class="button button-primary button-large" style="background-color: #1C6EF5; border-color: #1C6EF5;">
                         <?php esc_html_e( 'Complete Setup Now', 'ceypay-payment-gateway' ); ?>
+                    </a>
+                    <a href="<?php echo esc_url( $dismiss_url ); ?>" style="margin-left: 12px; font-size: 13px;">
+                        <?php esc_html_e( 'Dismiss', 'ceypay-payment-gateway' ); ?>
                     </a>
                 </div>
             </div>

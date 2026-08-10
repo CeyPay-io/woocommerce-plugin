@@ -109,8 +109,15 @@
 .ceypay-modal__dialog {
     position: relative;
     width: 100%;
-    max-width: 380px;
-    height: 600px;
+    /* 420 rather than 380: the header is a 36px / 1fr / 36px grid with 16px
+       gaps and 24px padding, so a 380px dialog left the centre column only
+       228px -- not enough for a title plus the Sandbox badge on one line, so
+       the heading wrapped. 420px gives it 268px. */
+    max-width: 420px;
+    /* Grow to fit the provider list (six rows) instead of clipping the last
+       row behind the body's fade mask. Still capped at 90dvh. */
+    height: auto;
+    min-height: 480px;
     max-height: 90dvh;
     background: var(--ceypay-bg);
     border-radius: var(--ceypay-radius);
@@ -122,6 +129,17 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+/* Height morph between the provider list and the QR view.
+   The overshoot in the curve (y2 > 1) is what gives it the elastic, magnetic
+   settle rather than a linear stretch. Applied only while morphing, so it
+   never fights the open animation or a viewport resize -- morphDialogHeight()
+   in ceypay-checkout.js adds the class, sets an explicit height, then hands
+   control back to `auto`. */
+.ceypay-modal__dialog.is-morphing {
+    transition: height 0.52s cubic-bezier(0.34, 1.32, 0.44, 1);
+    will-change: height;
 }
 
 /* --- View Transition Animations (GPU Optimized) --- */
@@ -203,6 +221,12 @@
     #ceypay-view-provider,
     #ceypay-view-qr {
         animation-duration: 0.15s !important;
+    }
+
+    /* Belt and braces: morphDialogHeight() already skips the animation when
+       reduced motion is requested, but if it ever runs, do not animate. */
+    .ceypay-modal__dialog.is-morphing {
+        transition: none !important;
     }
 }
 
@@ -323,6 +347,9 @@
     margin: 0;
     line-height: 1.2;
     text-align: center;
+    /* Keep the heading on one line. Provider titles ("Pay with Binance") sit
+       beside the Sandbox badge, and wrapping made the header two lines tall. */
+    white-space: nowrap;
 }
 
 /* Removed duplicate - see line 44 for the actual badge styles */
@@ -481,6 +508,11 @@
     flex-direction: column;
     overflow-y: auto;
     padding: 0 24px;
+    /* Always reserve the scrollbar track. Without this the bar appears and
+       disappears as the dialog height animates between views, changing the
+       content width by ~11px mid-transition and shifting every row sideways.
+       Browsers without support simply ignore it and behave as before. */
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
     mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);

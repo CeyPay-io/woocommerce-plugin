@@ -14,8 +14,8 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'ceypay_check_status',
-                transaction_id: transactionId,
                 order_id: ceypay_params.order_id,
+                order_key: ceypay_params.order_key,
                 security: ceypay_params.nonce
             },
             success: function(response) {
@@ -40,7 +40,8 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'ceypay_simulate_payment',
-                transaction_id: transactionId,
+                order_id: ceypay_params.order_id,
+                order_key: ceypay_params.order_key,
                 security: ceypay_params.nonce
             },
             success: function(response) {

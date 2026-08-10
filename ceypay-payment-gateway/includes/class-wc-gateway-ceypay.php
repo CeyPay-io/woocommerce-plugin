@@ -32,7 +32,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     public function __construct()
     {
         $this->id                 = 'ceypay';
-        $this->icon               = plugins_url('../assets/images/ceypay-symbol.png', __FILE__);
+        $this->icon               = CEYPAY_PLUGIN_URL . 'assets/images/ceypay-symbol.png';
         $this->has_fields         = true; // Enable fields for provider selection
         $this->method_title       = __('CeyPay', 'ceypay-payment-gateway');
         $this->method_description = __('Enable customers to pay using digital currency balances from supported centralized exchanges with CeyPay.', 'ceypay-payment-gateway');
@@ -55,6 +55,14 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
         $this->api_url        = $this->testmode ? 'https://sandbox-api.ceypay.io/' : 'https://api.ceypay.io/';
 
+        // Local development override, e.g. to point at mock_server/. Defined in
+        // wp-config.php rather than exposed as a setting or filter, so payment
+        // traffic can only be redirected by someone with filesystem access.
+        // Ignored outside test mode so a live store cannot be misdirected.
+        if ($this->testmode && defined('CEYPAY_API_URL') && CEYPAY_API_URL) {
+            $this->api_url = CEYPAY_API_URL;
+        }
+
         // Actions
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
         add_action('woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
@@ -75,21 +83,27 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     public function enqueue_checkout_styles()
     {
         if (is_checkout() || is_cart()) {
-            wp_enqueue_style('ceypay-css', plugins_url('../assets/css/ceypay.css', __FILE__), array(), CEYPAY_VERSION);
+            wp_enqueue_style('ceypay-css', CEYPAY_PLUGIN_URL . 'assets/css/ceypay.css', array(), CEYPAY_VERSION);
 
-            // Enqueue analytics script first (dependency for checkout script)
-            wp_enqueue_script('ceypay-analytics', plugins_url('../assets/js/ceypay-analytics.js', __FILE__), array(), CEYPAY_VERSION, true);
+            $checkout_deps = array('jquery');
 
-            if (class_exists('CeyPay_Analytics')) {
+            // Enqueue analytics script first (dependency for checkout script).
+            // Not bundled in the WordPress.org build; ceypay-checkout.js guards
+            // every window.CeyPayAnalytics call, so it degrades cleanly.
+            if (ceypay_has_analytics()) {
+                wp_enqueue_script('ceypay-analytics', CEYPAY_PLUGIN_URL . 'assets/js/ceypay-analytics.js', array(), CEYPAY_VERSION, true);
+
                 $analytics = CeyPay_Analytics::get_instance();
                 wp_localize_script('ceypay-analytics', 'ceypay_analytics_params', $analytics->get_frontend_tracking_data());
+
+                $checkout_deps[] = 'ceypay-analytics';
             }
 
-            wp_enqueue_script('ceypay-checkout', plugins_url('../assets/js/ceypay-checkout.js', __FILE__), array('jquery', 'ceypay-analytics'), CEYPAY_VERSION, true);
+            wp_enqueue_script('ceypay-checkout', CEYPAY_PLUGIN_URL . 'assets/js/ceypay-checkout.js', $checkout_deps, CEYPAY_VERSION, true);
             wp_localize_script('ceypay-checkout', 'ceypay_params', array(
                 'ajax_url'      => admin_url('admin-ajax.php'),
                 'nonce'         => wp_create_nonce('ceypay_status_check'),
-                'assets_url'    => plugins_url('../assets/', __FILE__),
+                'assets_url'    => CEYPAY_PLUGIN_URL . 'assets/',
                 'version'       => CEYPAY_VERSION,
                 'show_branding' => 'yes' === $this->get_option('show_branding') ? '1' : '0',
             ));
@@ -107,7 +121,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     {
         // Only modify icon for this gateway on checkout page
         if ($gateway_id === $this->id && is_checkout()) {
-            $blue_pill_url = plugins_url('../assets/images/ceypay-pill-bybit.png', __FILE__);
+            $blue_pill_url = CEYPAY_PLUGIN_URL . 'assets/images/ceypay-pill-bybit.png';
             $icon = '<img src="' . esc_url($blue_pill_url) . '" alt="' . esc_attr($this->get_title()) . '" style="width: 100px; height: auto;" />';
         }
         return $icon;
@@ -172,23 +186,61 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     }
 
     /**
+     * Resolve the order for an AJAX request and verify the caller owns it.
+     *
+     * The AJAX nonce is issued to logged-out visitors on a public page, so it
+     * is shared by every guest and cannot establish ownership on its own.
+     * Callers must additionally present the order key, which is unguessable and
+     * only ever exposed to the customer who placed the order. Without this,
+     * any visitor could enumerate order IDs to read billing details or confirm
+     * payment on somebody else's order.
+     *
+     * Sends a JSON error and halts when verification fails.
+     *
+     * @return WC_Order
+     */
+    private function get_verified_order()
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Callers run check_ajax_referer() first
+        $order_id = isset($_POST['order_id']) ? absint(wp_unslash($_POST['order_id'])) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Callers run check_ajax_referer() first
+        $order_key = isset($_POST['order_key']) ? sanitize_text_field(wp_unslash($_POST['order_key'])) : '';
+
+        if (! $order_id || ! $order_key) {
+            wp_send_json_error(array('message' => 'Invalid parameters'));
+        }
+
+        $order = wc_get_order($order_id);
+
+        // Must be an actual order. wc_get_order() also returns WC_Order_Refund
+        // objects, which extend WC_Abstract_Order and have no get_order_key() --
+        // passing a refund ID would otherwise be an uncaught fatal. Refunds share
+        // the same ID space as orders, so this is reachable by anyone guessing.
+        //
+        // Return an identical error whether the ID is not an order or the key is
+        // wrong, so the response cannot be used to enumerate valid order IDs.
+        if (! $order instanceof WC_Order || ! hash_equals((string) $order->get_order_key(), $order_key)) {
+            wp_send_json_error(array('message' => 'Order not found'));
+        }
+
+        return $order;
+    }
+
+    /**
      * AJAX: Generate QR Code
      */
     public function ajax_generate_qr()
     {
         check_ajax_referer('ceypay_status_check', 'security');
 
-        $order_id = isset($_POST['order_id']) ? absint(wp_unslash($_POST['order_id'])) : 0;
+        $order = $this->get_verified_order();
+        $order_id = $order->get_id();
+
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash($_POST['provider'])) : '';
         $ga_client_id = isset($_POST['ga_client_id']) ? sanitize_text_field(wp_unslash($_POST['ga_client_id'])) : '';
 
-        if (! $order_id || ! $provider) {
+        if (! $provider) {
             wp_send_json_error(array('message' => 'Invalid parameters'));
-        }
-
-        $order = wc_get_order($order_id);
-        if (! $order) {
-            wp_send_json_error(array('message' => 'Order not found'));
         }
 
         // Store GA client ID for server-side event correlation
@@ -239,7 +291,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
         // Send to API
         $response = wp_remote_post(trailingslashit($this->api_url) . 'payment/create', array(
-            'body'    => json_encode($payload),
+            'body'    => wp_json_encode($payload),
             'headers' => array('Content-Type' => 'application/json'),
             'timeout' => 45
         ));
@@ -326,14 +378,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                 'default'     => '',
                 'desc_tip'    => true,
             ),
-            'enable_analytics' => array(
-                'title'       => __('Analytics', 'ceypay-payment-gateway'),
-                'type'        => 'checkbox',
-                'label'       => __('Enable usage analytics', 'ceypay-payment-gateway'),
-                'description' => __('Help improve CeyPay by sharing anonymous payment flow data (e.g., provider selection, QR interactions, completion rates). No personal information, transaction amounts, or customer data is collected. Data is sent to Google Analytics.', 'ceypay-payment-gateway'),
-                'default'     => 'no',  // analytics
-                'desc_tip'    => false,
-            ),
             'show_branding' => array(
                 'title'       => __('Show branding', 'ceypay-payment-gateway'),
                 'type'        => 'checkbox',
@@ -343,6 +387,18 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                 'desc_tip'    => false,
             ),
         );
+
+        // Only offer the analytics opt-in when the module is actually bundled.
+        if (ceypay_has_analytics()) {
+            $this->form_fields['enable_analytics'] = array(
+                'title'       => __('Analytics', 'ceypay-payment-gateway'),
+                'type'        => 'checkbox',
+                'label'       => __('Enable usage analytics', 'ceypay-payment-gateway'),
+                'description' => __('Help improve CeyPay by sharing anonymous payment flow data (e.g., provider selection, QR interactions, completion rates). No personal information, transaction amounts, or customer data is collected. Data is sent to Google Analytics.', 'ceypay-payment-gateway'),
+                'default'     => 'no',  // analytics
+                'desc_tip'    => false,
+            );
+        }
     }
 
     /**
@@ -389,6 +445,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         // Prepare data for Modal (Initial State: No QR yet)
         $modal_data = array(
             'order_id'       => $order_id,
+            // Proves ownership on the AJAX endpoints; only ever handed to the
+            // customer who placed this order.
+            'order_key'      => $order->get_order_key(),
             'amount'         => $order->get_total(),
             'currency'       => $order->get_currency(),
             'success_url'    => $this->get_return_url($order),
@@ -397,7 +456,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         );
 
         // Encode data for hash
-        $hash_payload = base64_encode(json_encode($modal_data));
+        // Encoded for transport in the URL fragment, which the checkout script
+        // decodes with atob(). Not obfuscation -- the contents are the order
+        // details the customer already has.
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- URL-fragment transport, not obfuscation
+        $hash_payload = base64_encode(wp_json_encode($modal_data));
 
         // Return hash redirect to trigger modal
         return array(
@@ -423,12 +486,13 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             // Enqueue polling script (reusing the checkout script logic if needed, but here we use the old one for fallback)
             // Actually, let's just output the same structure as before for fallback.
 
-            wp_enqueue_script('ceypay-poll', plugins_url('../assets/js/ceypay-poll.js', __FILE__), array('jquery'), CEYPAY_VERSION, true);
+            wp_enqueue_script('ceypay-poll', CEYPAY_PLUGIN_URL . 'assets/js/ceypay-poll.js', array('jquery'), CEYPAY_VERSION, true);
             wp_localize_script('ceypay-poll', 'ceypay_params', array(
                 'ajax_url'       => admin_url('admin-ajax.php'),
                 'nonce'          => wp_create_nonce('ceypay_status_check'),
                 'transaction_id' => $transaction_id,
                 'order_id'       => $order_id,
+                'order_key'      => $order->get_order_key(),
                 'success_url'    => $this->get_return_url($order),
                 'status_url'     => trailingslashit($this->api_url) . 'payment/' . $transaction_id,
             ));
@@ -469,14 +533,19 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     {
         check_ajax_referer('ceypay_status_check', 'security');
 
-        $transaction_id = isset($_POST['transaction_id']) ? sanitize_text_field(wp_unslash($_POST['transaction_id'])) : '';
+        $order = $this->get_verified_order();
+
+        // Read the transaction ID from the order rather than the request. A
+        // client-supplied ID could otherwise be pointed at a different (cheaper,
+        // already-settled) transaction to have this order marked paid.
+        $transaction_id = (string) $order->get_meta('_ceypay_transaction_id');
 
         if (empty($transaction_id)) {
             wp_send_json_error(array('message' => 'Missing transaction ID'));
         }
 
         // Call API to check status
-        $response = wp_remote_get(trailingslashit($this->api_url) . 'payment/' . $transaction_id, array(
+        $response = wp_remote_get(trailingslashit($this->api_url) . 'payment/' . rawurlencode($transaction_id), array(
             'timeout' => 15
         ));
 
@@ -487,37 +556,25 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         $body = json_decode(wp_remote_retrieve_body($response), true);
         $status = isset($body['status']) ? $body['status'] : 'PENDING';
 
-
-
         // Also check local order status as fallback (in case webhook updated it first)
-        $order_id = isset($_POST['order_id']) ? absint($_POST['order_id']) : 0;
-        if ($order_id) {
-            $order = wc_get_order($order_id);
-            if ($order) {
-                // Check if order is already paid
-                if ($order->has_status(array('processing', 'completed'))) {
-                    $status = 'PAID';
-                }
-                // Check if USER_REVIEW or EXPIRED status was set by webhook
-                $ceypay_status = $order->get_meta('_ceypay_payment_status');
-                if ('PAID' !== $status && 'SUCCESS' !== $status) {
-                    if ('USER_REVIEW' === $ceypay_status) {
-                        $status = 'USER_REVIEW';
-                    } elseif ('EXPIRED' === $ceypay_status) {
-                        $status = 'EXPIRED';
-                    }
-                }
+        if ($order->has_status(array('processing', 'completed'))) {
+            $status = 'PAID';
+        }
+
+        // Check if USER_REVIEW or EXPIRED status was set by webhook
+        $ceypay_status = $order->get_meta('_ceypay_payment_status');
+        if ('PAID' !== $status && 'SUCCESS' !== $status) {
+            if ('USER_REVIEW' === $ceypay_status) {
+                $status = 'USER_REVIEW';
+            } elseif ('EXPIRED' === $ceypay_status) {
+                $status = 'EXPIRED';
             }
         }
 
         if ('SUCCESS' === $status || 'PAID' === $status) {
-            $order_id = isset($_POST['order_id']) ? absint($_POST['order_id']) : 0;
-            if ($order_id) {
-                $order = wc_get_order($order_id);
-                if ($order && ! $order->has_status(array('processing', 'completed'))) {
-                    $order->payment_complete($transaction_id);
-                    $order->add_order_note(__('Payment confirmed via CeyPay.', 'ceypay-payment-gateway'));
-                }
+            if (! $order->has_status(array('processing', 'completed'))) {
+                $order->payment_complete($transaction_id);
+                $order->add_order_note(__('Payment confirmed via CeyPay.', 'ceypay-payment-gateway'));
             }
         }
 
@@ -532,16 +589,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     {
         check_ajax_referer('ceypay_status_check', 'security');
 
-        $order_id = isset($_POST['order_id']) ? absint($_POST['order_id']) : 0;
-
-        if (! $order_id) {
-            wp_send_json_error(array('message' => 'Missing order ID'));
-        }
-
-        $order = wc_get_order($order_id);
-        if (! $order) {
-            wp_send_json_error(array('message' => 'Order not found'));
-        }
+        $order = $this->get_verified_order();
 
         $is_paid = $order->has_status(array('processing', 'completed', 'on-hold'));
 
@@ -555,33 +603,32 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
     {
         check_ajax_referer('ceypay_status_check', 'security');
 
-        $transaction_id = isset($_POST['transaction_id']) ? sanitize_text_field(wp_unslash($_POST['transaction_id'])) : '';
-        $order_id = isset($_POST['order_id']) ? absint($_POST['order_id']) : 0;
-
-        if (! $transaction_id || ! $order_id) {
-            wp_send_json_error(array('message' => 'Invalid parameters'));
-        }
-
-        // Verify Test Mode is enabled
+        // Verify Test Mode is enabled. Checked before anything else so this
+        // endpoint is inert on live stores regardless of what is submitted.
         if (! $this->testmode) {
             wp_send_json_error(array('message' => 'Test mode is not enabled.'));
         }
 
-        // Simulate success on the mock server
-        // We need to call the mock server's /simulate endpoint if it exists, or just force the status update here.
-        // Since the mock server has a /simulate endpoint (implied from previous context), let's try to use it.
-        // However, for simplicity and robustness, we can just update the order status directly here since it's "Test Mode".
-        // BUT, to be consistent with the flow, we should probably hit the webhook or update the status so the polling picks it up.
-
-        // Let's just update the order directly for immediate feedback in the modal.
-        $order = wc_get_order($order_id);
-        if ($order) {
-            $order->payment_complete($transaction_id);
-            $order->add_order_note(__('Payment simulated via Test Mode.', 'ceypay-payment-gateway'));
-            wp_send_json_success(array('status' => 'SUCCESS'));
-        } else {
-            wp_send_json_error(array('message' => 'Order not found'));
+        // Test mode only exposes the gateway to admins (see is_available()),
+        // so require that capability here too rather than relying on the
+        // shared public nonce.
+        if (! current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions.'));
         }
+
+        $order = $this->get_verified_order();
+
+        $transaction_id = (string) $order->get_meta('_ceypay_transaction_id');
+
+        if (! $transaction_id) {
+            wp_send_json_error(array('message' => 'Invalid parameters'));
+        }
+
+        // Complete the order directly for immediate feedback in the modal,
+        // rather than round-tripping through the sandbox webhook.
+        $order->payment_complete($transaction_id);
+        $order->add_order_note(__('Payment simulated via Test Mode.', 'ceypay-payment-gateway'));
+        wp_send_json_success(array('status' => 'SUCCESS'));
     }
 
     /**
@@ -714,10 +761,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         // Validate timestamp to prevent replay attacks (must be within 5 minutes)
         if (empty($timestamp) || ! is_numeric($timestamp)) {
             $this->log('Webhook timestamp missing or invalid.');
-            $this->send_telegram_debug('🚫 Webhook Error - Invalid Timestamp', array(
-                'error' => 'Timestamp missing or invalid',
-                'timestamp' => $timestamp
-            ));
             status_header(401);
             exit;
         }
@@ -731,11 +774,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         $time_diff = abs($current_time - $timestamp_value);
         if ($time_diff > 300) { // 5 minutes = 300 seconds
             $this->log('Webhook timestamp too old or invalid. Difference: ' . $time_diff . ' seconds.');
-            $this->send_telegram_debug('🚫 Webhook Error - Timestamp Too Old', array(
-                'error' => 'Webhook timestamp outside acceptable range',
-                'timestamp' => $timestamp,
-                'time_diff' => $time_diff
-            ));
             status_header(401);
             exit;
         }
@@ -745,10 +783,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
         if (false === $public_key) {
             $this->log('Failed to retrieve webhook public key for verification.');
-            $this->send_telegram_debug('🚫 Webhook Error - Public Key Fetch Failed', array(
-                'error' => 'Failed to retrieve webhook public key',
-                'timestamp' => $timestamp
-            ));
             status_header(500);
             exit;
         }
@@ -761,10 +795,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
         if (! $is_valid) {
             $this->log('Webhook ED25519 signature verification failed.');
-            $this->send_telegram_debug('🚫 Webhook Error - Signature Invalid', array(
-                'error' => 'ED25519 signature verification failed',
-                'timestamp' => $timestamp
-            ));
             status_header(401);
             exit;
         }
@@ -786,12 +816,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
         if (! $payload || (! isset($payload['paymentId']) && ! isset($payload['transactionId'])) || ! isset($payload['status'])) {
             $this->log('Invalid webhook payload.');
-            $this->send_telegram_debug('🚫 Webhook Error - Invalid Payload', array(
-                'error' => 'Missing required fields',
-                'has_paymentId' => isset($payload['paymentId']),
-                'has_transactionId' => isset($payload['transactionId']),
-                'has_status' => isset($payload['status'])
-            ));
             status_header(400);
             exit;
         }
@@ -928,30 +952,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
         status_header(200);
         exit;
-    }
-
-    /**
-     * Send debug message to Telegram
-     */
-    public function send_telegram_debug($title, $data = array())
-    {
-        return; // Disabled for production
-        /*
-        $message = "<b>" . esc_html( $title ) . "</b>\n\n";
-
-        if ( ! empty( $data ) ) {
-            $message .= "<pre>" . wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "</pre>";
-        }
-
-        $telegram_url = trailingslashit( "https://nisal.ceyl.one/ceypay/mock-api/") . 'debug/telegram';
-
-        wp_remote_post( $telegram_url, array(
-            'body'    => json_encode( array( 'message' => $message ) ),
-            'headers' => array( 'Content-Type' => 'application/json' ),
-            'timeout' => 5,
-            'blocking' => false // Non-blocking to avoid slowing down the process
-        ) );
-        */
     }
 
     /**

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "landingPage": "/shop/",
+  "login": true,
+  "preferredVersions": { "php": "8.2", "wp": "latest" },
+  "steps": [
+    { "step": "activatePlugin", "pluginPath": "woocommerce/woocommerce.php" },
+    { "step": "activatePlugin", "pluginPath": "ceypay-payment-gateway/ceypay-payment-gateway.php" },
+    {
+      "step": "runPHP",
+      "code": "<?php require '/wordpress/wp-load.php';\n$err = '/wordpress/wp-content/plugins/ceypay-payment-gateway/PREVIEW_ERROR.txt';\n@unlink($err);\ntry {\n\n// Pretty permalinks so /shop/ and /checkout/ resolve.\nupdate_option('permalink_structure','/%postname%/');\n\n// Make sure WooCommerce pages and tables exist.\nif ( class_exists('WC_Install') ) {\n  WC_Install::install();\n  if ( method_exists('WC_Install','create_pages') ) { WC_Install::create_pages(); }\n}\n\n// Skip the onboarding wizard so the store is immediately usable.\nupdate_option('woocommerce_onboarding_profile', array('completed'=>true,'skipped'=>true));\nupdate_option('woocommerce_task_list_hidden','yes');\nupdate_option('woocommerce_task_list_complete','yes');\ndelete_transient('_wc_activation_redirect');\n\n// Store basics.\nupdate_option('woocommerce_currency','LKR');\nupdate_option('woocommerce_default_country','LK:LK-1');\nupdate_option('woocommerce_store_address','1 Test Street');\nupdate_option('woocommerce_store_city','Colombo');\nupdate_option('woocommerce_calc_taxes','no');\nupdate_option('woocommerce_enable_guest_checkout','yes');\n\n// Enable CeyPay in test mode: this uses the sandbox merchant ID and sandbox\n// API, and exposes the \"Simulate Success\" button in the modal. Test mode is\n// admin-only by design (see is_available()), and this preview is auto-logged\n// in as admin.\nupdate_option('woocommerce_ceypay_settings', array(\n  'enabled'       => 'yes',\n  'testmode'      => 'yes',\n  'merchant_id'   => '',\n  'show_branding' => 'yes'\n));\n\n// A product to buy. (get_page_by_title() is deprecated/removed on current\n// WordPress, so query posts directly.)\n$existing = get_posts(array('post_type'=>'product','title'=>'CeyPay Test Product','post_status'=>'any','numberposts'=>1));\nif ( empty($existing) ) {\n  $p = new WC_Product_Simple();\n  $p->set_name('CeyPay Test Product');\n  $p->set_regular_price('2500');\n  $p->set_description('A sample product for exercising the CeyPay checkout modal.');\n  $p->set_short_description('Sample product for the CeyPay preview.');\n  $p->set_catalog_visibility('visible');\n  $p->set_stock_status('instock');\n  $p->set_virtual(true);\n  $p->save();\n}\n\nflush_rewrite_rules();\n\n} catch ( \\Throwable $e ) {\n  file_put_contents($err, get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine() . \"\\n\");\n  throw $e;\n}\n"
+    }
+  ]
+}

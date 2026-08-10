@@ -170,7 +170,7 @@ jQuery(document).ready(function($) {
                         <div class="ceypay-qr__overlay">
                             <span class="ceypay-check"><svg viewBox="0 0 20 20"><path d="M4 10.5 8 14.5 16 6" /></svg></span>
                         </div>
-                        <img id="ceypay-qr-image" src="" alt="CeyPay QR code" style="display:none;" onload="this.style.display='block'; this.previousElementSibling.previousElementSibling.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <img id="ceypay-qr-image" src="" alt="CeyPay QR code" style="display:none;" onload="this.style.display='block'; var w=this.closest('.ceypay-qr'); var l=w&&w.querySelector('.ceypay-qr__loading'); if(l){l.style.display='none';}" />
                         <!-- <div class="ceypay-qr__logo">
                             <img src="${ceypay_params.assets_url}images/ceypay-symbol.png" alt="CeyPay" />
                         </div> -->
@@ -296,6 +296,7 @@ jQuery(document).ready(function($) {
                 action: 'ceypay_generate_qr',
                 security: ceypay_params.nonce,
                 order_id: data.order_id,
+                order_key: data.order_key,
                 provider: data.provider,
                 ga_client_id: gaClientId
             },
@@ -464,6 +465,7 @@ jQuery(document).ready(function($) {
                         data: {
                             action: 'ceypay_check_order_status',
                             order_id: data.order_id,
+                            order_key: data.order_key,
                             security: ceypay_params.nonce
                         },
                         success: function(response) {
@@ -532,6 +534,58 @@ jQuery(document).ready(function($) {
         $('#ceypay-modal').addClass('is-visible');
     }
 
+    /**
+     * Swap modal views while animating the dialog's height between them.
+     *
+     * The dialog is height:auto so each view sizes to its own content (the
+     * provider list is taller than the QR view). Without this the swap snaps
+     * from one height to the other. Height cannot be transitioned from/to
+     * `auto` in CSS, so measure both ends and drive it in pixels, then hand
+     * control back to `auto` so the modal stays responsive afterwards.
+     *
+     * @param {Function} swap Mutates the DOM to show the new view.
+     */
+    function morphDialogHeight(swap) {
+        var el = document.querySelector('.ceypay-modal__dialog');
+        var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!el || reduced) {
+            swap();
+            return;
+        }
+
+        var from = el.getBoundingClientRect().height;
+
+        swap();
+
+        // Measure the new view's natural height, then restore the old one so
+        // the browser has a definite start value to animate away from.
+        el.style.height = 'auto';
+        var to = Math.min(el.getBoundingClientRect().height, window.innerHeight * 0.9);
+        el.style.height = from + 'px';
+
+        // Force a reflow so the two heights are separate style resolutions,
+        // otherwise the browser coalesces them and no transition runs.
+        void el.offsetHeight;
+
+        el.classList.add('is-morphing');
+        el.style.height = to + 'px';
+
+        var done = function (e) {
+            if (e && e.target !== el) { return; }        // ignore bubbling from children
+            if (e && e.propertyName !== 'height') { return; }
+            el.removeEventListener('transitionend', done);
+            clearTimeout(fallback);
+            el.classList.remove('is-morphing');
+            el.style.height = '';                        // back to auto
+        };
+
+        // transitionend can be missed (tab hidden, interrupted swap), which
+        // would leave the height pinned. Always clear it.
+        var fallback = setTimeout(done, 700);
+        el.addEventListener('transitionend', done);
+    }
+
     function showProviderSelection(animate) {
         $('#ceypay-provider-title').text('Select provider');
         $('#ceypay-subtitle').text('Choose your preferred payment method.').show();
@@ -553,10 +607,12 @@ jQuery(document).ready(function($) {
             $qrView.addClass('ceypay-view--exit');
 
             setTimeout(function() {
-                $qrView.hide().removeClass('ceypay-view--exit ceypay-view--enter');
                 // Use requestAnimationFrame for smoother rendering
                 requestAnimationFrame(function() {
-                    $providerView.show().addClass('ceypay-view--enter');
+                    morphDialogHeight(function () {
+                        $qrView.hide().removeClass('ceypay-view--exit ceypay-view--enter');
+                        $providerView.show().addClass('ceypay-view--enter');
+                    });
                     setTimeout(function() {
                         $providerView.removeClass('ceypay-view--enter');
                     }, 250);
@@ -603,12 +659,14 @@ jQuery(document).ready(function($) {
             $providerView.addClass('ceypay-view--exit');
 
             setTimeout(function() {
-                $providerView.hide().removeClass('ceypay-view--exit ceypay-view--enter');
                 // Use requestAnimationFrame for smoother rendering
                 requestAnimationFrame(function() {
-                    $qrView.show().addClass('ceypay-view--enter');
-                    $('#ceypay-actions').show();
-                    $('.ceypay-back-btn').show();
+                    morphDialogHeight(function () {
+                        $providerView.hide().removeClass('ceypay-view--exit ceypay-view--enter');
+                        $qrView.show().addClass('ceypay-view--enter');
+                        $('#ceypay-actions').show();
+                        $('.ceypay-back-btn').show();
+                    });
                     setTimeout(function() {
                         $qrView.removeClass('ceypay-view--enter');
                     }, 250);
@@ -700,6 +758,7 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.ceypay-provider-btn', function() {
         var provider = $(this).data('provider');
         var orderId = window.ceypayOrderData.order_id;
+        var orderKey = window.ceypayOrderData.order_key;
         var $btn = $(this);
 
         // Track provider selection or switch
@@ -725,6 +784,7 @@ jQuery(document).ready(function($) {
                 action: 'ceypay_generate_qr',
                 security: ceypay_params.nonce,
                 order_id: orderId,
+                order_key: orderKey,
                 provider: provider,
                 ga_client_id: gaClientId
             },
@@ -771,8 +831,8 @@ jQuery(document).ready(function($) {
                 type: 'POST',
                 data: {
                     action: 'ceypay_check_status',
-                    transaction_id: data.transaction_id,
                     order_id: data.order_id,
+                    order_key: data.order_key,
                     security: ceypay_params.nonce
                 },
                 success: function(response) {
@@ -812,8 +872,8 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'ceypay_simulate_payment',
-                transaction_id: data.transaction_id,
                 order_id: data.order_id,
+                order_key: data.order_key,
                 security: ceypay_params.nonce
             },
             success: function(response) {
