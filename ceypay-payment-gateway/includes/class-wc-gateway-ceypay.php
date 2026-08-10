@@ -494,7 +494,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                 'order_id'       => $order_id,
                 'order_key'      => $order->get_order_key(),
                 'success_url'    => $this->get_return_url($order),
-                'status_url'     => trailingslashit($this->api_url) . 'payment/' . $transaction_id,
+                'status_url'     => trailingslashit($this->api_url) . 'payment/' . rawurlencode($transaction_id) . '/status',
             ));
 
             echo '<div class="ceypay-payment-instructions" style="text-align:center; margin: 20px 0; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9;">';
@@ -544,8 +544,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             wp_send_json_error(array('message' => 'Missing transaction ID'));
         }
 
-        // Call API to check status
-        $response = wp_remote_get(trailingslashit($this->api_url) . 'payment/' . rawurlencode($transaction_id), array(
+        // Call API to check status. GET payment/{id} requires merchant
+        // authentication; payment/{id}/status is the public polling endpoint.
+        $response = wp_remote_get(trailingslashit($this->api_url) . 'payment/' . rawurlencode($transaction_id) . '/status', array(
             'timeout' => 15
         ));
 
@@ -553,8 +554,17 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             wp_send_json_error(array('message' => $response->get_error_message()));
         }
 
+        $response_code = wp_remote_retrieve_response_code($response);
         $body = json_decode(wp_remote_retrieve_body($response), true);
-        $status = isset($body['status']) ? $body['status'] : 'PENDING';
+
+        // Only trust 'status' from a successful response. An error body carries
+        // its own keys, which must not be mistaken for a payment status.
+        if (200 === $response_code && isset($body['status'])) {
+            $status = $body['status'];
+        } else {
+            $this->log("Status check failed for transaction $transaction_id: HTTP $response_code");
+            $status = 'PENDING';
+        }
 
         // Also check local order status as fallback (in case webhook updated it first)
         if ($order->has_status(array('processing', 'completed'))) {
