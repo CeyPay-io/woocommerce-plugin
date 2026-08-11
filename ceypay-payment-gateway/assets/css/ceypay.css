@@ -582,7 +582,18 @@
 #ceypay-view-qr {
     justify-content: center;
     align-items: center;
-    padding: 0;
+    /* Breathing room around the column. The QR code, the amount, the status
+       line and the buttons are spaced only by their own 8-12px margins, so
+       without this they sit flush against the header and the buttons. The
+       original fixed-height card hid that: it was always taller than this
+       view needed, and the centred flex body spread the leftover height out.
+       Now that the dialog sizes itself, the spacing has to be stated. */
+    padding: 24px 0 8px;
+    /* No fade here. The mask on .ceypay-modal__body is a scroll affordance for
+       the provider list -- on this view, which never scrolls, it just washes
+       out the top edge of the QR code and the bottom of the status line. */
+    mask-image: none;
+    -webkit-mask-image: none;
 }
 
 .ceypay-provider-list {
@@ -1123,11 +1134,12 @@
         /* The bottom corners meet the screen edge, so only the top pair is
            rounded. */
         border-radius: var(--ceypay-radius) var(--ceypay-radius) 0 0;
-        /* Hug the content the way a drawer should. The min-height that keeps
-           the desktop card from looking starved would instead pad the QR view
-           with dead space here; morphDialogHeight() still animates the change
-           between the two views. */
-        min-height: 0;
+        /* A floor so a sparse state -- an error, a view still loading -- cannot
+           collapse the drawer into a sliver at the bottom of the screen. It is
+           below what either view actually needs, so in normal use the content
+           decides the height. (Spacing inside the QR view comes from that
+           view's own padding, not from slack left over here.) */
+        min-height: min(480px, 92dvh);
         max-height: 92dvh;
         /* Off-screen rather than the 20px nudge the centred card uses, so it
            enters from the edge it is anchored to. */
