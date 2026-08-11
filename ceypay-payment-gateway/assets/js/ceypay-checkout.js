@@ -230,15 +230,31 @@ jQuery(document).ready(function($) {
     $('body').append(modalTemplate);
 
     // Shared tooltip helper
-    function showTooltip(el, html) {
-        var tip = $('<div class="ceypay-tooltip">' + html + '</div>');
+    // interactive: the pointer is allowed into this tooltip (it has a link to
+    // click). Left off, the tooltip is inert and cannot block what is under it.
+    function showTooltip(el, html, interactive) {
+        var tip = $('<div class="ceypay-tooltip' + (interactive ? ' is-interactive' : '') + '">' + html + '</div>');
         $('body').append(tip);
         requestAnimationFrame(function() {
             var rect = el.getBoundingClientRect();
+            var width = tip.outerWidth();
+            // Centre on the trigger, but keep the whole tooltip on screen. The
+            // help button sits near the left edge of the dialog, and on a phone
+            // -- where the dialog is the full width of the screen -- a centred
+            // tooltip started at a negative offset and cut the support address
+            // off past the edge.
+            var triggerCentre = rect.left + rect.width / 2;
+            var left = triggerCentre - width / 2;
+            var maxLeft = document.documentElement.clientWidth - width - 8;
+            left = Math.max(8, Math.min(left, maxLeft));
             tip.css({
                 top:  (rect.top  - tip.outerHeight() - 8) + 'px',
-                left: (rect.left + rect.width / 2 - tip.outerWidth() / 2) + 'px'
+                left: left + 'px'
             });
+            // Keep the arrow under the button after a clamp, and inside the
+            // tooltip's own rounded corners (6px radius, 8px arrow).
+            var arrow = Math.max(10, Math.min(triggerCentre - left, width - 10));
+            tip[0].style.setProperty('--ceypay-tooltip-arrow', arrow + 'px');
             requestAnimationFrame(function() { tip.addClass('is-visible'); });
         });
         return tip;
@@ -251,14 +267,86 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Help Button Tooltip on Hover
+    // Help tooltip: hover to peek, click to pin.
+    //
+    // Hover alone could not work here. The tooltip holds a support address the
+    // customer needs to read, select or tap, and under a plain hover tooltip it
+    // vanished the moment the pointer left the button to go and reach it. So
+    // the pointer is allowed to cross into the tooltip -- a short grace period
+    // covers the gap between the two -- and a click pins it open until it is
+    // dismissed. Pinning is also the only thing that works on a touch screen,
+    // where there is no hover to begin with and a tap was previously the one
+    // gesture that could not open this at all.
+    var SUPPORT_EMAIL = 'support@ceypay.io';
     var helpTooltip = null;
-    $(document).on('mouseenter', '.ceypay-help-btn', function() {
-        helpTooltip = showTooltip(this, 'Need some help?<br>Reach support@ceypay.io');
-    });
-    $(document).on('mouseleave', '.ceypay-help-btn', function() {
+    var helpPinned = false;
+    var helpHideTimer = null;
+
+    function cancelHelpHide() {
+        if (helpHideTimer) {
+            clearTimeout(helpHideTimer);
+            helpHideTimer = null;
+        }
+    }
+
+    function closeHelpTooltip() {
+        cancelHelpHide();
+        helpPinned = false;
         hideTooltip(helpTooltip);
         helpTooltip = null;
+    }
+
+    function openHelpTooltip(btn) {
+        cancelHelpHide();
+        if (helpTooltip) {
+            return;
+        }
+        var mailto = '<a href="mailto:' + SUPPORT_EMAIL + '">' + SUPPORT_EMAIL + '</a>';
+        helpTooltip = showTooltip(btn, sprintf1(t('need_help', 'Need some help?<br>Reach %s'), mailto), true);
+    }
+
+    // 160ms: long enough to cross the gap between the button and the tooltip
+    // without it disappearing underneath you, short enough that it never feels
+    // stuck open.
+    function scheduleHelpHide() {
+        if (helpPinned || ! helpTooltip) {
+            return;
+        }
+        cancelHelpHide();
+        helpHideTimer = setTimeout(closeHelpTooltip, 160);
+    }
+
+    $(document).on('mouseenter', '.ceypay-help-btn', function() { openHelpTooltip(this); });
+    $(document).on('mouseleave', '.ceypay-help-btn', scheduleHelpHide);
+    $(document).on('mouseenter', '.ceypay-tooltip', cancelHelpHide);
+    $(document).on('mouseleave', '.ceypay-tooltip', scheduleHelpHide);
+
+    $(document).on('click', '.ceypay-help-btn', function() {
+        if (helpPinned) {
+            closeHelpTooltip();
+            return;
+        }
+        openHelpTooltip(this);
+        helpPinned = true;
+    });
+
+    // A pinned tooltip closes on Escape or on a click anywhere outside it.
+    // Clicks inside are deliberately left alone so the address stays selectable
+    // and the mailto link still opens.
+    //
+    // The button is excluded here rather than by stopPropagation() in the
+    // handler above: both handlers are bound to document, and stopPropagation()
+    // does not stop a second handler on the same node -- so the click that
+    // pinned the tooltip went straight on to dismiss it again.
+    $(document).on('click', function(e) {
+        if (helpPinned && ! $(e.target).closest('.ceypay-tooltip, .ceypay-help-btn').length) {
+            closeHelpTooltip();
+        }
+    });
+    $(document).on('keydown', function(e) {
+        if (helpPinned && (e.key === 'Escape' || e.key === 'Esc')) {
+            closeHelpTooltip();
+        }
     });
 
     // Footer CeyPay logo — version tooltip on hover

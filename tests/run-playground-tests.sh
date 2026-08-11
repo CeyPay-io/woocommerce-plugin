@@ -38,16 +38,35 @@ run_blueprint() {
 
   echo
   echo "==> $name"
-  rm -f "$BUILD/$result_file"
 
-  npx --yes @wp-playground/cli@latest run-blueprint \
-    --blueprint="$ROOT/tests/blueprints/$blueprint" \
-    --mount-before-install="$BUILD:/wordpress/wp-content/plugins/ceypay-payment-gateway" \
-    --mount-before-install="$WC_PLUGIN_DIR:/wordpress/wp-content/plugins/woocommerce" \
-    > "$WORK/$name.log" 2>&1
+  # Retry only when the run produced nothing at all. The Playground CLI
+  # downloads WordPress on each boot and dies with "Error: fetch failed" if that
+  # download hiccups, which is indistinguishable from a passing suite failing at
+  # random. A blueprint whose assertions ran and reported is never retried, so
+  # this cannot paper over a real failure -- only over a run that never started.
+  local attempt=1 attempts="${BLUEPRINT_ATTEMPTS:-3}"
+  while [ "$attempt" -le "$attempts" ]; do
+    rm -f "$BUILD/$result_file"
+
+    npx --yes @wp-playground/cli@latest run-blueprint \
+      --blueprint="$ROOT/tests/blueprints/$blueprint" \
+      --mount-before-install="$BUILD:/wordpress/wp-content/plugins/ceypay-payment-gateway" \
+      --mount-before-install="$WC_PLUGIN_DIR:/wordpress/wp-content/plugins/woocommerce" \
+      > "$WORK/$name.log" 2>&1
+
+    if [ -f "$BUILD/$result_file" ]; then
+      break
+    fi
+
+    if [ "$attempt" -lt "$attempts" ]; then
+      echo "    no results (attempt $attempt of $attempts); retrying"
+      sleep 2
+    fi
+    attempt=$((attempt + 1))
+  done
 
   if [ ! -f "$BUILD/$result_file" ]; then
-    echo "FAIL: $name produced no results (the PHP process died)"
+    echo "FAIL: $name produced no results after $attempts attempts (the PHP process died)"
     echo "----- Playground output -----"
     tail -30 "$WORK/$name.log"
     FAILED=1

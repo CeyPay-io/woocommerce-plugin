@@ -93,7 +93,12 @@ For a summary of how this plugin handles user data, please refer to the "Externa
 = 2026-8-11 - v1.3.2 =
 * adds full translation support for the checkout modal
 * adds a Settings link on the Plugins screen
+* the checkout modal now opens as a bottom drawer on phones, within reach of your thumb
+* the provider list now scrolls inside the modal instead of stretching it, restoring the modal's original proportions on desktop
+* the support address in the modal is now a working email link, and the help bubble stays open long enough to use it, including on touch screens
 * fix: payment status checks now use the dedicated status endpoint and validate the response code, so failed checks no longer leave orders stuck
+* fix: the modal no longer overflows the screen on a phone held sideways
+* fix: the help bubble no longer opens partly off the edge of narrow screens
 
 = 2026-8-10 - v1.3.1 =
 * security: checkout endpoints now verify the order key, so order details can no longer be read and payment can no longer be confirmed by guessing an order ID
