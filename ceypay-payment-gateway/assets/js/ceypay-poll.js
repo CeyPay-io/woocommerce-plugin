@@ -26,7 +26,10 @@ jQuery(document).ready(function($) {
                 security: ceypay_params.nonce
             },
             success: function(response) {
-                if (response.success && response.data.status === 'SUCCESS') {
+                // ajax_check_status() normalises a settled order to 'PAID' and
+                // passes the gateway's own 'SUCCESS' through unchanged.
+                var status = response.data && response.data.status;
+                if (response.success && (status === 'SUCCESS' || status === 'PAID')) {
                     window.location.href = successUrl;
                 }
             }

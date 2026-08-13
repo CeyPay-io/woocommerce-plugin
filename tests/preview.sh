@@ -11,6 +11,10 @@
 
 set -uo pipefail
 
+# Job control, so the Playground server below lands in its own process group
+# and cleanup() can take the whole tree down -- see the note on cleanup().
+set -m
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PORT="${1:-9400}"
 WORK="${TMPDIR:-/tmp}/ceypay-playground-tests"
@@ -40,9 +44,13 @@ ATTEMPTS="${PREVIEW_ATTEMPTS:-3}"
 # start over if it never arrives. The receipt is written only after the
 # blueprint has verified the store end to end.
 SERVER_PID=""
+# $SERVER_PID is the npx wrapper, not the node server it spawns. Killing only
+# the wrapper leaves the grandchild holding $PORT, so every retry below fails to
+# bind and the script reports a boot failure a clean retry would have survived.
+# `set -m` puts the wrapper in its own process group; kill the group.
 cleanup() {
   if [ -n "$SERVER_PID" ] && kill -0 "$SERVER_PID" 2>/dev/null; then
-    kill "$SERVER_PID" 2>/dev/null
+    kill -- "-$SERVER_PID" 2>/dev/null || kill "$SERVER_PID" 2>/dev/null
     wait "$SERVER_PID" 2>/dev/null
   fi
 }

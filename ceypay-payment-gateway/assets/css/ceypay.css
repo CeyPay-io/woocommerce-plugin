@@ -533,6 +533,17 @@
     border-bottom: 1px solid #E2E8F0;
 }
 
+/* Flipped below the trigger when there is no room above (landscape phones):
+   the arrow moves to the top edge and points the other way. */
+.ceypay-tooltip.is-below::after {
+    bottom: auto;
+    top: -5px;
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid #E2E8F0;
+    border-top: 1px solid #E2E8F0;
+}
+
 /* --- Provider List --- */
 .ceypay-modal__body {
     flex: 1;

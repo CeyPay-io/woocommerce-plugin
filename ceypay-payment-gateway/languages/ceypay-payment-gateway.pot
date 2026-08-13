@@ -2,7 +2,7 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: CeyPay Payment Gateway 1.4.0\n"
+"Project-Id-Version: CeyPay Payment Gateway 1.3.2\n"
 "Report-Msgid-Bugs-To: https://ceypay.io/\n"
 "POT-Creation-Date: 2026-08-10T00:00:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -109,10 +109,6 @@ msgstr ""
 msgid "Help improve CeyPay by sharing anonymous payment flow data (e.g., provider selection, QR interactions, completion rates). No personal information, transaction amounts, or customer data is collected. Data is sent to Google Analytics."
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:133
-msgid "Leave site?"
-msgstr ""
-
 #: includes/class-wc-gateway-ceypay.php:441
 msgid "Merchant ID"
 msgstr ""
@@ -186,7 +182,11 @@ msgstr ""
 msgid "Payment simulated via Test Mode."
 msgstr ""
 
-#: includes/class-wc-gateway-ceypay.php:437
+#: includes/class-wc-gateway-ceypay.php:110
+msgid "Payment under review"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:439
 msgid "Place the gateway in test mode using test API keys."
 msgstr ""
 
@@ -211,8 +211,16 @@ msgstr ""
 msgid "Processing..."
 msgstr ""
 
+#: includes/class-wc-gateway-ceypay.php:112
+msgid "QR code expired"
+msgstr ""
+
 #: includes/class-wc-gateway-ceypay.php:118
 msgid "Refresh QR code"
+msgstr ""
+
+#: includes/class-wc-gateway-ceypay.php:111
+msgid "Refreshing QR..."
 msgstr ""
 
 #: includes/class-wc-gateway-ceypay.php:119

@@ -217,8 +217,8 @@ jQuery(document).ready(function($) {
                 <!-- Modal Footer -->
                 <div class="ceypay-modal__footer">
                     <p class="ceypay-footer-text">
-                        By continuing, you agree to<br>
-                        our <a href="https://www.ceypay.io/legal/terms" target="_blank" rel="noopener noreferrer" class="ceypay-footer-link">${t('terms_of_service', 'Terms of Service')}</a> & <a href="https://www.ceypay.io/legal/privacy" target="_blank" rel="noopener noreferrer" class="ceypay-footer-link">${t('privacy_policy', 'Privacy Policy')}</a>.
+                        ${t('by_continuing', 'By continuing, you agree to our')}
+                        <a href="https://www.ceypay.io/legal/terms" target="_blank" rel="noopener noreferrer" class="ceypay-footer-link">${t('terms_of_service', 'Terms of Service')}</a> & <a href="https://www.ceypay.io/legal/privacy" target="_blank" rel="noopener noreferrer" class="ceypay-footer-link">${t('privacy_policy', 'Privacy Policy')}</a>.
                     </p>
                     ${brandingHtml}
                 </div>
@@ -247,8 +247,19 @@ jQuery(document).ready(function($) {
             var left = triggerCentre - width / 2;
             var maxLeft = document.documentElement.clientWidth - width - 8;
             left = Math.max(8, Math.min(left, maxLeft));
+            // Above the trigger by default, but flip below when there is no room
+            // -- on a landscape phone the dialog starts ~17px from the top and an
+            // unclamped tooltip lands off-screen.
+            var height = tip.outerHeight();
+            var top = rect.top - height - 8;
+            var flipped = top < 8;
+            if (flipped) {
+                top = Math.min(rect.bottom + 8, document.documentElement.clientHeight - height - 8);
+                top = Math.max(8, top);
+            }
+            tip.toggleClass('is-below', flipped);
             tip.css({
-                top:  (rect.top  - tip.outerHeight() - 8) + 'px',
+                top:  top + 'px',
                 left: left + 'px'
             });
             // Keep the arrow under the button after a clamp, and inside the
@@ -343,9 +354,16 @@ jQuery(document).ready(function($) {
             closeHelpTooltip();
         }
     });
+    //
+    // Escape needs the same care: the modal closes on keyup (and reloads the
+    // page, discarding a live QR). Dismissing the tooltip on keydown would let
+    // the same keypress tear the modal down on keyup, so the tooltip swallows
+    // that one keyup instead.
+    var swallowEscapeKeyup = false;
     $(document).on('keydown', function(e) {
         if (helpPinned && (e.key === 'Escape' || e.key === 'Esc')) {
             closeHelpTooltip();
+            swallowEscapeKeyup = true;
         }
     });
 
@@ -382,7 +400,7 @@ jQuery(document).ready(function($) {
 
         $('#ceypay-status-message')
             .addClass('is-user-review')
-            .html('Payment under review <span class="ceypay-ripple ceypay-ripple--review"></span>');
+            .html(t('under_review', 'Payment under review') + ' <span class="ceypay-ripple ceypay-ripple--review"></span>');
     }
 
     // Track auto-refresh attempts per order
@@ -401,7 +419,7 @@ jQuery(document).ready(function($) {
         if (isAuto) {
             $('#ceypay-status-message')
                 .removeClass('is-expired')
-                .html('Refreshing QR... <span class="ceypay-ripple"></span>');
+                .html(t('refreshing_qr', 'Refreshing QR...') + ' <span class="ceypay-ripple"></span>');
             $('.ceypay-qr').removeClass('is-expired');
         }
 
@@ -459,7 +477,7 @@ jQuery(document).ready(function($) {
         $('.ceypay-qr').addClass('is-expired');
         $('#ceypay-status-message')
             .addClass('is-expired')
-            .html('QR code expired');
+            .html(t('qr_expired', 'QR code expired'));
 
         // Hide deep link button
         $('#ceypay-deep-link').hide();
@@ -552,9 +570,16 @@ jQuery(document).ready(function($) {
         showProviderSelection(true);
     });
     $(document).on('keyup', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
+        if (e.key !== 'Escape') {
+            return;
         }
+        // This keypress already dismissed the pinned help tooltip; it must not
+        // also close the modal.
+        if (swallowEscapeKeyup) {
+            swallowEscapeKeyup = false;
+            return;
+        }
+        closeModal();
     });
 
     // Listen for Hash Change (triggered by WooCommerce redirect to #ceypay_modal=...)
@@ -703,8 +728,8 @@ jQuery(document).ready(function($) {
     }
 
     function showProviderSelection(animate) {
-        $('#ceypay-provider-title').text('Select provider');
-        $('#ceypay-subtitle').text('Choose your preferred payment method.').show();
+        $('#ceypay-provider-title').text(t('select_provider', 'Select provider'));
+        $('#ceypay-subtitle').text(t('choose_method', 'Choose your preferred payment method.')).show();
 
         // Ensure test mode alert is shown if active
         if (window.ceypayOrderData && window.ceypayOrderData.test_mode) {
@@ -760,10 +785,10 @@ jQuery(document).ready(function($) {
              var usdtAmount = parseFloat(parseFloat(data.fee_breakdown.netAmountUSDT).toFixed(8));
              var formattedCurrencyAmount = formatNumberWithCommas(parseFloat(data.currency_amount).toFixed(2));
              var currencySymbol = data.currency_code === 'LKR' ? 'රු.' : data.currency_code;
-             priceHtml = '<span style="font-weight:500">Pay</span> <span class="ceypay-amount-highlight">' + formatNumberWithCommas(usdtAmount) + ' USDT</span> <span class="ceypay-amount-secondary">(' + currencySymbol + ' ' + formattedCurrencyAmount + ')</span>';
+             priceHtml = '<span style="font-weight:500">' + t('pay_label', 'Pay') + '</span> <span class="ceypay-amount-highlight">' + formatNumberWithCommas(usdtAmount) + ' USDT</span> <span class="ceypay-amount-secondary">(' + currencySymbol + ' ' + formattedCurrencyAmount + ')</span>';
         } else if (data.amount && data.currency_amount) {
              var formattedCurrencyAmount = formatNumberWithCommas(parseFloat(data.currency_amount).toFixed(2));
-             priceHtml = '<span style="font-weight:500">Pay</span> <span class="ceypay-amount-highlight">' + formatNumberWithCommas(parseFloat(data.amount).toFixed(3)) + ' ' + data.currency + '</span> <span class="ceypay-amount-secondary">(' + formattedCurrencyAmount + ' ' + data.currency_code + ')</span>';
+             priceHtml = '<span style="font-weight:500">' + t('pay_label', 'Pay') + '</span> <span class="ceypay-amount-highlight">' + formatNumberWithCommas(parseFloat(data.amount).toFixed(3)) + ' ' + data.currency + '</span> <span class="ceypay-amount-secondary">(' + formattedCurrencyAmount + ' ' + data.currency_code + ')</span>';
         }
         $('#ceypay-qr-price').html(priceHtml);
 

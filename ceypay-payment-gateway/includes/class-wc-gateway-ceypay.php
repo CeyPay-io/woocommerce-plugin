@@ -107,6 +107,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             'scan_instruction'  => __('Scan the QR or open your app to finish checkout.', 'ceypay-payment-gateway'),
             'pay_label'         => __('Pay', 'ceypay-payment-gateway'),
             'waiting_payment'   => __('Waiting for payment...', 'ceypay-payment-gateway'),
+            'under_review'      => __('Payment under review', 'ceypay-payment-gateway'),
+            'refreshing_qr'     => __('Refreshing QR...', 'ceypay-payment-gateway'),
+            'qr_expired'        => __('QR code expired', 'ceypay-payment-gateway'),
             'qr_code_alt'       => __('CeyPay QR code', 'ceypay-payment-gateway'),
             /* translators: %s: payment provider name, e.g. Binance */
             'open_app'          => __('Open %s app', 'ceypay-payment-gateway'),
@@ -130,7 +133,6 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             'qr_refresh_error'  => __('Failed to refresh QR code', 'ceypay-payment-gateway'),
             'simulation_failed' => __('Simulation failed: ', 'ceypay-payment-gateway'),
             'simulation_error'  => __('Simulation error.', 'ceypay-payment-gateway'),
-            'leave_site'        => __('Leave site?', 'ceypay-payment-gateway'),
 
             // Footer.
             'powered_by'        => __('Powered by', 'ceypay-payment-gateway'),
