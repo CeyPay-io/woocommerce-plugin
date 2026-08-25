@@ -116,7 +116,7 @@ jQuery(document).ready(function($) {
 
                         <div class="ceypay-provider-btn" role="button" tabindex="0" data-provider="BYBIT">
                             <div class="ceypay-provider-icon">
-                                <img src="${ceypay_params.assets_url}images/bybit.svg" alt="Bybit">
+                                <img src="${ceypay_params.assets_url}images/providers/bybit.svg" alt="Bybit">
                             </div>
                             <div class="ceypay-provider-content">
                                 <span class="ceypay-provider-name">Bybit Pay</span>
@@ -130,7 +130,7 @@ jQuery(document).ready(function($) {
                         </div>
                         <div class="ceypay-provider-btn" role="button" tabindex="0" data-provider="BINANCE">
                             <div class="ceypay-provider-icon">
-                                <img src="${ceypay_params.assets_url}images/binance.svg" alt="Binance Pay">
+                                <img src="${ceypay_params.assets_url}images/providers/binance.svg" alt="Binance Pay">
                             </div>
                             <div class="ceypay-provider-content">
                                 <span class="ceypay-provider-name">Binance Pay</span>
@@ -144,7 +144,7 @@ jQuery(document).ready(function($) {
                         </div>
                         <div class="ceypay-provider-btn" role="button" tabindex="0" data-provider="KUCOIN">
                             <div class="ceypay-provider-icon">
-                                <img src="${ceypay_params.assets_url}images/kucoin-logo.svg" alt="KuCoin Pay">
+                                <img src="${ceypay_params.assets_url}images/providers/kucoin-logo.svg" alt="KuCoin Pay">
                             </div>
                             <div class="ceypay-provider-content">
                                 <span class="ceypay-provider-name">KuCoin Pay</span>
@@ -158,7 +158,7 @@ jQuery(document).ready(function($) {
                         </div>
                         <div class="ceypay-provider-btn ceypay-provider-btn--disabled" role="button" aria-disabled="true">
                             <div class="ceypay-provider-icon">
-                                <img src="${ceypay_params.assets_url}images/bitazza.svg" alt="Bitazza">
+                                <img src="${ceypay_params.assets_url}images/providers/bitazza.svg" alt="Bitazza">
                             </div>
                             <div class="ceypay-provider-content">
                                 <span class="ceypay-provider-name">Freedom Pay</span>
@@ -168,7 +168,7 @@ jQuery(document).ready(function($) {
                         </div>
                         <div class="ceypay-provider-btn ceypay-provider-btn--disabled" role="button" aria-disabled="true">
                             <div class="ceypay-provider-icon">
-                                <img src="${ceypay_params.assets_url}images/solana.svg" alt="Solana Pay">
+                                <img src="${ceypay_params.assets_url}images/providers/solana.svg" alt="Solana Pay">
                             </div>
                             <div class="ceypay-provider-content">
                                 <span class="ceypay-provider-name">Solana Pay</span>
@@ -178,7 +178,7 @@ jQuery(document).ready(function($) {
                         </div>
                         <div class="ceypay-provider-btn ceypay-provider-btn--disabled" role="button" aria-disabled="true">
                             <div class="ceypay-provider-icon">
-                                <img src="${ceypay_params.assets_url}images/ton_symbol.svg" alt="TON">
+                                <img src="${ceypay_params.assets_url}images/providers/ton_symbol.svg" alt="TON">
                             </div>
                             <div class="ceypay-provider-content">
                                 <span class="ceypay-provider-name">TON</span>
@@ -408,12 +408,16 @@ jQuery(document).ready(function($) {
     var maxAutoRefresh = 3;
 
     function refreshQrCode(data, isAuto) {
+        // ceypay:analytics-start
         var gaClientId = window.CeyPayAnalytics ? window.CeyPayAnalytics.getClientId() : '';
+        // ceypay:analytics-end
 
+        // ceypay:analytics-start
         // Track QR refresh event
         if (window.CeyPayAnalytics) {
             window.CeyPayAnalytics.trackQrRefreshed(data, isAuto ? 'auto' : 'manual', autoRefreshAttempts);
         }
+        // ceypay:analytics-end
 
         // Show refreshing state
         if (isAuto) {
@@ -432,7 +436,9 @@ jQuery(document).ready(function($) {
                 order_id: data.order_id,
                 order_key: data.order_key,
                 provider: data.provider,
+                // ceypay:analytics-start
                 ga_client_id: gaClientId
+                // ceypay:analytics-end
             },
             success: function(response) {
                 if (response.success) {
@@ -507,10 +513,12 @@ jQuery(document).ready(function($) {
     function renderExpired(data) {
         autoRefreshAttempts++;
 
+        // ceypay:analytics-start
         // Track payment expired
         if (window.CeyPayAnalytics) {
             window.CeyPayAnalytics.trackPaymentExpired(data);
         }
+        // ceypay:analytics-end
 
         if (autoRefreshAttempts <= maxAutoRefresh) {
             // Auto-refresh
@@ -523,12 +531,14 @@ jQuery(document).ready(function($) {
 
     // Close Modal Handler
     function closeModal() {
+        // ceypay:analytics-start
         // Track modal closed event and time spent
         if (window.CeyPayAnalytics && window.ceypayOrderData) {
             var stage = $('#ceypay-view-qr').is(':visible') ? 'qr_display' : 'provider_selection';
             window.CeyPayAnalytics.trackModalClosed(window.ceypayOrderData, stage);
             window.CeyPayAnalytics.trackTimeSpent(window.ceypayOrderData, 'abandoned', stage);
         }
+        // ceypay:analytics-end
 
         $('#ceypay-modal').removeClass('is-visible');
 
@@ -555,10 +565,12 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.ceypay-modal__close', closeModal);
     $(document).on('click', '.ceypay-modal__backdrop', closeModal);
     $(document).on('click', '.ceypay-back-btn', function() {
+        // ceypay:analytics-start
         // Track back clicked event
         if (window.CeyPayAnalytics && window.ceypayOrderData) {
             window.CeyPayAnalytics.trackBackClicked(window.ceypayOrderData);
         }
+        // ceypay:analytics-end
 
         // Stop polling
         if (pollInterval) clearInterval(pollInterval);
@@ -644,7 +656,9 @@ jQuery(document).ready(function($) {
     function openPaymentModal(data) {
         // Store order data globally for this session
         window.ceypayOrderData = data;
+        // ceypay:analytics-start
         window.ceypaySelectedProvider = null; // Track current provider for switch detection
+        // ceypay:analytics-end
 
         // Show/hide test mode badge AND alert
         if (data.test_mode) {
@@ -655,11 +669,13 @@ jQuery(document).ready(function($) {
             $('#ceypay-testmode-alert').hide();
         }
 
+        // ceypay:analytics-start
         // Track modal open event and start engagement timer
         if (window.CeyPayAnalytics) {
             window.CeyPayAnalytics.trackModalOpen(data);
             window.CeyPayAnalytics.startTimer('modal_' + data.order_id);
         }
+        // ceypay:analytics-end
 
         // Lock body scroll when modal is open
         $('body').css('overflow', 'hidden');
@@ -771,10 +787,12 @@ jQuery(document).ready(function($) {
             autoRefreshAttempts = 0;
         }
 
+        // ceypay:analytics-start
         // Track QR displayed event
         if (window.CeyPayAnalytics) {
             window.CeyPayAnalytics.trackQrDisplayed(data);
         }
+        // ceypay:analytics-end
 
         $('#ceypay-provider-title').text(sprintf1(t('pay_with', 'Pay with %s'), toTitleCase(data.provider)));
         $('#ceypay-subtitle').hide();
@@ -846,12 +864,14 @@ jQuery(document).ready(function($) {
         if (data.deep_link) {
             $('#ceypay-deep-link').attr('href', data.deep_link).show();
 
+            // ceypay:analytics-start
             // Track deep link clicks
             $('#ceypay-deep-link').off('click.analytics').on('click.analytics', function() {
                 if (window.CeyPayAnalytics) {
                     window.CeyPayAnalytics.trackDeeplinkClicked(data);
                 }
             });
+            // ceypay:analytics-end
 
             // Auto-open on mobile devices
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
@@ -902,6 +922,7 @@ jQuery(document).ready(function($) {
         var orderKey = window.ceypayOrderData.order_key;
         var $btn = $(this);
 
+        // ceypay:analytics-start
         // Track provider selection or switch
         if (window.CeyPayAnalytics) {
             if (window.ceypaySelectedProvider && window.ceypaySelectedProvider !== provider) {
@@ -911,12 +932,15 @@ jQuery(document).ready(function($) {
             window.CeyPayAnalytics.trackProviderSelected(provider, window.ceypayOrderData);
         }
         window.ceypaySelectedProvider = provider;
+        // ceypay:analytics-end
 
         // Show loading state on button
         $btn.addClass('is-loading').attr('aria-disabled', 'true');
 
+        // ceypay:analytics-start
         // Get GA client ID for server-side correlation
         var gaClientId = window.CeyPayAnalytics ? window.CeyPayAnalytics.getClientId() : '';
+        // ceypay:analytics-end
 
         $.ajax({
             url: ceypay_params.ajax_url,
@@ -927,7 +951,9 @@ jQuery(document).ready(function($) {
                 order_id: orderId,
                 order_key: orderKey,
                 provider: provider,
+                // ceypay:analytics-start
                 ga_client_id: gaClientId
+                // ceypay:analytics-end
             },
             success: function(response) {
                 if (response.success) {
@@ -960,10 +986,12 @@ jQuery(document).ready(function($) {
             if (attempts > maxAttempts) {
                 clearInterval(pollInterval);
 
+                // ceypay:analytics-start
                 // Track payment expired
                 if (window.CeyPayAnalytics) {
                     window.CeyPayAnalytics.trackPaymentExpired(data);
                 }
+                // ceypay:analytics-end
                 return;
             }
 
@@ -981,11 +1009,13 @@ jQuery(document).ready(function($) {
                         if (response.data.status === 'SUCCESS' || response.data.status === 'PAID') {
                             clearInterval(pollInterval);
 
+                            // ceypay:analytics-start
                             // Track payment success and time spent
                             if (window.CeyPayAnalytics) {
                                 window.CeyPayAnalytics.trackPaymentSuccess(data);
                                 window.CeyPayAnalytics.trackTimeSpent(data, 'completed', 'qr_display');
                             }
+                            // ceypay:analytics-end
 
                             renderSuccess();
                             setTimeout(function() {

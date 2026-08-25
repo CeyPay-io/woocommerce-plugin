@@ -20,7 +20,14 @@ fi
 
 rm -rf "$DEST"
 mkdir -p "$DEST"
-cp -R "$SRC"/. "$DEST"/
+
+# Copy plugin content, excluding dot entries. A plain `cp -R "$SRC"/.` also
+# drags in dot directories such as .playwright-mcp/ (Playwright console logs and
+# page dumps), which must never reach the directory.
+for ENTRY in "$SRC"/*; do
+  [ -e "$ENTRY" ] || continue
+  cp -R "$ENTRY" "$DEST"/
+done
 
 # --- Strip the optional analytics module -------------------------------------
 #
@@ -28,12 +35,35 @@ cp -R "$SRC"/. "$DEST"/
 # consent, and guideline 8 forbids loading third-party executable scripts.
 # Removing these two files removes the GA4 loader, the Meta Pixel, the
 # server-side Measurement Protocol calls, and the hardcoded GA4 credentials.
-#
-# The plugin gates every analytics touchpoint on ceypay_has_analytics(), and
-# ceypay-checkout.js guards every window.CeyPayAnalytics call, so the build
-# stays fully functional without them. tests/blueprints/smoke.json asserts this.
 rm -f "$DEST/includes/class-ceypay-analytics.php"
 rm -f "$DEST/assets/js/ceypay-analytics.js"
+
+# Deleting the files is not enough -- the code that loads them has to go too.
+# A conditional require of a file absent from the ZIP, and a wp_enqueue_script()
+# for a script absent from the ZIP, read to a plugin reviewer as a payload
+# loader (guideline 8). The settings field left behind also still advertised
+# "Data is sent to Google Analytics", contradicting the readme (guideline 7).
+#
+# Every such touchpoint in the source is fenced with ceypay:analytics-start /
+# ceypay:analytics-end. Drop the fenced regions, markers included.
+for FILE in $(grep -rl 'ceypay:analytics-start' "$DEST" --include='*.php' --include='*.js'); do
+  awk '
+    /ceypay:analytics-start/ { skip = 1; next }
+    /ceypay:analytics-end/   { skip = 0; next }
+    !skip                    { print }
+  ' "$FILE" > "$FILE.stripped"
+  mv "$FILE.stripped" "$FILE"
+done
+
+# The translation template still carries the stripped settings copy, including
+# the "Data is sent to Google Analytics" string. .pot records are blank-line
+# separated, so filter whole records rather than lines.
+POT="$DEST/languages/ceypay-payment-gateway.pot"
+if [ -f "$POT" ]; then
+  awk -v RS='' -v ORS='\n\n' \
+    '!/Enable usage analytics|Google Analytics|msgid "Analytics"/' "$POT" > "$POT.pot-tmp"
+  mv "$POT.pot-tmp" "$POT"
+fi
 
 # --- Drop the remote Google Fonts import -------------------------------------
 #

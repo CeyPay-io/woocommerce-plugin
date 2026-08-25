@@ -154,6 +154,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
             $checkout_deps = array('jquery');
 
+            // ceypay:analytics-start
             // Enqueue analytics script first (dependency for checkout script).
             // Not bundled in the WordPress.org build; ceypay-checkout.js guards
             // every window.CeyPayAnalytics call, so it degrades cleanly.
@@ -165,6 +166,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
 
                 $checkout_deps[] = 'ceypay-analytics';
             }
+            // ceypay:analytics-end
 
             wp_enqueue_script('ceypay-checkout', CEYPAY_PLUGIN_URL . 'assets/js/ceypay-checkout.js', $checkout_deps, CEYPAY_VERSION, true);
             wp_localize_script('ceypay-checkout', 'ceypay_params', array(
@@ -305,16 +307,20 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         $order_id = $order->get_id();
 
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash($_POST['provider'])) : '';
+        // ceypay:analytics-start
         $ga_client_id = isset($_POST['ga_client_id']) ? sanitize_text_field(wp_unslash($_POST['ga_client_id'])) : '';
+        // ceypay:analytics-end
 
         if (! $provider) {
             wp_send_json_error(array('message' => 'Invalid parameters'));
         }
 
+        // ceypay:analytics-start
         // Store GA client ID for server-side event correlation
         if (! empty($ga_client_id)) {
             $order->update_meta_data('_ceypay_ga_client_id', $ga_client_id);
         }
+        // ceypay:analytics-end
 
         // Clear any previous payment status (e.g., EXPIRED) when generating new QR
         $order->delete_meta_data('_ceypay_payment_status');
@@ -456,6 +462,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             ),
         );
 
+        // ceypay:analytics-start
         // Only offer the analytics opt-in when the module is actually bundled.
         if (ceypay_has_analytics()) {
             $this->form_fields['enable_analytics'] = array(
@@ -467,6 +474,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                 'desc_tip'    => false,
             );
         }
+        // ceypay:analytics-end
     }
 
     /**
@@ -922,6 +930,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                         $order->add_order_note(__('Payment confirmed via CeyPay Webhook.', 'ceypay-payment-gateway'));
                         $this->log("Order #$order_id marked as paid.");
 
+                        // ceypay:analytics-start
                         // Track webhook success via GA4 Measurement Protocol
                         if (class_exists('CeyPay_Analytics')) {
                             $analytics = CeyPay_Analytics::get_instance();
@@ -935,6 +944,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                                 $client_id
                             );
                         }
+                        // ceypay:analytics-end
                     } else {
                         $this->log("Order #$order_id is already processed.");
                     }
@@ -1008,6 +1018,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                         $order->update_status('failed', __('Payment failed via CeyPay Webhook.', 'ceypay-payment-gateway'));
                         $this->log("Order #$order_id marked as failed.");
 
+                        // ceypay:analytics-start
                         // Track webhook failure via GA4 Measurement Protocol
                         if (class_exists('CeyPay_Analytics')) {
                             $analytics = CeyPay_Analytics::get_instance();
@@ -1021,6 +1032,7 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
                                 $client_id
                             );
                         }
+                        // ceypay:analytics-end
                     }
 
                     status_header(200);

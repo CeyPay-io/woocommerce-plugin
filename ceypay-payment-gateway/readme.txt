@@ -2,9 +2,9 @@
 Contributors: ceypay
 Tags: woocommerce, payment gateway, cryptocurrency, qr payment, checkout
 Requires at least: 6.5
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -84,11 +84,17 @@ When a customer initiates a payment, this plugin sends order information to the 
 * When: Every time a customer selects a payment provider at checkout, and when the resulting payment status is polled
 * Also sent: The store's webhook callback URL, so CeyPay can notify the site when payment completes
 
+The payment modal displays the notice "By continuing, you agree to our Terms of Service & Privacy Policy", linking to the two documents listed above. These are the terms governing the payment the customer is about to make through CeyPay, and the notice appears only inside the modal, after the customer has chosen CeyPay at checkout. It is a disclosure required for the transaction, not promotion of the service. The optional "Powered by CeyPay" credit is separate: it is off by default and shown only if the store owner enables it in the gateway settings.
+
 == Privacy Policy ==
 
 For a summary of how this plugin handles user data, please refer to the "External Services" section above.
 
 == Changelog ==
+
+= 2026-8-24 - v1.3.3 =
+* documents the payment modal's Terms of Service and Privacy Policy notice under External Services
+* removes unused tracking code from the distributed build
 
 = 2026-8-11 - v1.3.2 =
 * adds full translation support for the checkout modal
@@ -129,7 +135,7 @@ For a summary of how this plugin handles user data, please refer to the "Externa
 * adds test mode badges and alerts to checkout and payment modal
 
 = 2026-1-26 - v1.2.5 =
-* enhances analytics integration with native WooCommerce transaction ID fields
+* records the payment reference in the native WooCommerce transaction ID field
 * adds HPOS compatibility declaration
 
 = 2026-1-26 - v1.2.4 =

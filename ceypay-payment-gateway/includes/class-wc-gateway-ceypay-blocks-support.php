@@ -20,6 +20,7 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
     public function get_payment_method_script_handles() {
         $checkout_deps = array( 'jquery' );
 
+        // ceypay:analytics-start
         // Register Analytics Script first. Absent from the WordPress.org build.
         if ( ceypay_has_analytics() ) {
             wp_register_script( 'ceypay-analytics', CEYPAY_PLUGIN_URL . 'assets/js/ceypay-analytics.js', array(), CEYPAY_VERSION, true );
@@ -29,6 +30,7 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
 
             $checkout_deps[] = 'ceypay-analytics';
         }
+        // ceypay:analytics-end
 
         // Register Legacy Checkout Script (for Modal functionality)
         wp_register_script( 'ceypay-checkout', CEYPAY_PLUGIN_URL . 'assets/js/ceypay-checkout.js', $checkout_deps, CEYPAY_VERSION, true );
@@ -54,7 +56,7 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
                 'wp-element',
                 'wp-html-entities',
                 'wp-i18n',
-                'ceypay-checkout' // Depend on legacy script (which pulls in analytics when bundled)
+                'ceypay-checkout' // Depend on legacy script, which carries the modal
             ],
             CEYPAY_VERSION,
             true
@@ -73,12 +75,12 @@ final class WC_Gateway_CeyPay_Blocks_Support extends AbstractPaymentMethodType {
             // "Coming soon". Keep in sync with the modal in ceypay-checkout.js.
             'icons'       => [
                 'src'     => CEYPAY_PLUGIN_URL . 'assets/images/ceypay-symbol.png',
-                'binance' => CEYPAY_PLUGIN_URL . 'assets/images/binance.svg',
-                'bybit'   => CEYPAY_PLUGIN_URL . 'assets/images/bybit.svg',
-                'kucoin'  => CEYPAY_PLUGIN_URL . 'assets/images/kucoin-logo.svg',
-                'bitazza' => CEYPAY_PLUGIN_URL . 'assets/images/bitazza.svg',
-                'ton'     => CEYPAY_PLUGIN_URL . 'assets/images/ton_symbol.svg',
-                'solana'  => CEYPAY_PLUGIN_URL . 'assets/images/solana.svg',
+                'binance' => CEYPAY_PLUGIN_URL . 'assets/images/providers/binance.svg',
+                'bybit'   => CEYPAY_PLUGIN_URL . 'assets/images/providers/bybit.svg',
+                'kucoin'  => CEYPAY_PLUGIN_URL . 'assets/images/providers/kucoin-logo.svg',
+                'bitazza' => CEYPAY_PLUGIN_URL . 'assets/images/providers/bitazza.svg',
+                'ton'     => CEYPAY_PLUGIN_URL . 'assets/images/providers/ton_symbol.svg',
+                'solana'  => CEYPAY_PLUGIN_URL . 'assets/images/providers/solana.svg',
             ],
         ];
     }

@@ -3,7 +3,7 @@
  * Plugin Name: CeyPay Payment Gateway
  * Plugin URI:  https://docs.ceypay.io/wordpress
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.3.2
+ * Version:     1.3.3
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
@@ -36,33 +36,45 @@ if ( ! defined( 'CEYPAY_PLUGIN_DIR' ) ) {
     define( 'CEYPAY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
 
-// Load constants (including GA4 Measurement ID)
+// Load shared constants.
 require_once dirname( __FILE__ ) . '/includes/ceypay-constants.php';
 
-// Make sure WooCommerce is active
+// Make sure WooCommerce is active.
+//
+// These are prefixed because they sit at file scope in the main plugin file and
+// therefore land in the global namespace, where an unprefixed $active_plugins
+// could collide with another plugin doing the same thing.
 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Using core WordPress filter
-$active_plugins = (array) apply_filters( 'active_plugins', get_option( 'active_plugins', array() ) );
+$ceypay_active_plugins = (array) apply_filters( 'active_plugins', get_option( 'active_plugins', array() ) );
 
 if ( is_multisite() ) {
-    $network_active_plugins = array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) );
-    $active_plugins = array_unique( array_merge( $active_plugins, $network_active_plugins ) );
+    $ceypay_network_active_plugins = array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) );
+    $ceypay_active_plugins = array_unique( array_merge( $ceypay_active_plugins, $ceypay_network_active_plugins ) );
 }
 
-if ( ! in_array( 'woocommerce/woocommerce.php', $active_plugins, true ) ) {
+if ( ! in_array( 'woocommerce/woocommerce.php', $ceypay_active_plugins, true ) ) {
     return;
 }
 
+// ceypay:analytics-start
 /**
  * Whether the optional analytics module is bundled in this build.
  *
  * The WordPress.org build ships without it, so every analytics touchpoint
  * (script dependencies, settings field, event calls) must check this first.
  *
+ * Everything between the surrounding marker comments is removed by
+ * ci/build-wporg.sh, so the .org build contains no reference to the module at
+ * all -- not even a guarded one. A conditional require of a file absent from
+ * the ZIP reads as a payload loader to a plugin reviewer (guideline 8), which
+ * is why the guard itself has to go rather than just the file it guards.
+ *
  * @return bool
  */
 function ceypay_has_analytics() {
     return class_exists( 'CeyPay_Analytics' );
 }
+// ceypay:analytics-end
 
 /**
  * Add the Gateway to WooCommerce
@@ -83,12 +95,14 @@ function ceypay_init_gateway_class() {
 
     include_once dirname( __FILE__ ) . '/includes/class-wc-gateway-ceypay.php';
 
+    // ceypay:analytics-start
     // Load the optional Analytics Handler. Absent from the WordPress.org build.
     $ceypay_analytics_file = dirname( __FILE__ ) . '/includes/class-ceypay-analytics.php';
     if ( file_exists( $ceypay_analytics_file ) ) {
         require_once $ceypay_analytics_file;
         CeyPay_Analytics::get_instance();
     }
+    // ceypay:analytics-end
 
     // Only instantiate the gateway during CeyPay-specific AJAX actions to register hooks.
     // For WooCommerce AJAX actions (e.g., update_order_review), WC instantiates gateways itself.
