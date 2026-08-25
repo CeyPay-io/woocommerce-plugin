@@ -1,5 +1,5 @@
 === CeyPay Payment Gateway ===
-Contributors: ceypay
+Contributors: ceypay, ceyloncash, kasuncfdo, xbuddhi
 Tags: woocommerce, payment gateway, cryptocurrency, qr payment, checkout
 Requires at least: 6.5
 Tested up to: 7.1
