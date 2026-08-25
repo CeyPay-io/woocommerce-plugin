@@ -21,7 +21,7 @@ The plugin features a polished, responsive checkout modal that keeps customers o
 ### Key Features
 
 *   **Multi-Provider Support:** Let customers choose between Binance Pay, Bybit Pay and KuCoin Pay at checkout, with more providers on the way.
-*   **Seamless UX:** A modern, card-grid style provider selection and a clean, modal-based QR checkout.
+*   **Seamless UX:** Provider selection and QR payment happen in a modal on your checkout page, so customers never leave your store.
 *   **Mobile Optimized:** Automatically detects mobile devices and triggers deep links to open the relevant crypto app.
 *   **Real-time Status:** Built-in polling and webhook support ensure orders are marked as "Processing" instantly upon payment.
 *   **Developer Friendly:** Includes a robust Test Mode with a "Simulate Success" button for easy integration testing.
@@ -63,10 +63,10 @@ Visit our full documentation at [docs.ceypay.io](https://docs.ceypay.io/wordpres
 
 == Screenshots ==
 
-1.  **Checkout Selection:** Modern card-grid layout for selecting payment providers.
-2.  **Payment Modal:** Clean QR code display with status indicator.
-3.  **Mobile Experience:** "Open App" button for seamless mobile payments.
-4.  **Settings Panel:** Easy configuration in WooCommerce settings.
+1.  **Provider selection:** Customers choose Bybit Pay, Binance Pay or KuCoin Pay without leaving the checkout page.
+2.  **QR checkout:** The payment modal shows the amount in USDT and updates as the payment is confirmed.
+3.  **On mobile:** The modal opens as a bottom drawer, within reach of your thumb.
+4.  **Settings:** Enable the gateway, switch on test mode and enter your Merchant ID in WooCommerce settings.
 
 == External Services ==
 
