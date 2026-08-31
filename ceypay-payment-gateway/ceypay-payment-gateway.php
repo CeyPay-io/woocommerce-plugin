@@ -56,6 +56,10 @@ if ( ! in_array( 'woocommerce/woocommerce.php', $ceypay_active_plugins, true ) )
     return;
 }
 
+// Review prompt. Loaded after the WooCommerce check because it counts paid
+// orders, so it has nothing to do until WooCommerce is present.
+require_once dirname( __FILE__ ) . '/includes/ceypay-review-prompt.php';
+
 // ceypay:analytics-start
 /**
  * Whether the optional analytics module is bundled in this build.
