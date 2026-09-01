@@ -4,7 +4,29 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * CeyPay Analytics Handler
  *
  * Handles GA4 tracking for both frontend and backend events.
+ *
+ * This module is OPTIONAL and is excluded from the WordPress.org build.
+ * All of its configuration is defined here (rather than in ceypay-constants.php)
+ * so that deleting this file removes the tracking layer completely, credentials
+ * included. Nothing outside this file may reference the CEYPAY_GA4_* constants.
  */
+
+// GA4 Configuration (NOT exposed in admin settings)
+if (! defined('CEYPAY_GA4_MEASUREMENT_ID')) {
+    define('CEYPAY_GA4_MEASUREMENT_ID', 'G-ZZVE717KCV');
+}
+
+// GA4 Measurement Protocol API Secret (for server-side webhook events)
+// Generate this in GA4 Admin > Data Streams > Measurement Protocol API secrets
+if (! defined('CEYPAY_GA4_API_SECRET')) {
+    define('CEYPAY_GA4_API_SECRET', 'ch1HnD6zQ-G63zCFWJVRfw');
+}
+
+// Master analytics toggle (can be overridden in wp-config.php to force disable)
+// User-facing setting is in WooCommerce > Settings > Payments > CeyPay > Analytics
+if (! defined('CEYPAY_ANALYTICS_ENABLED')) {
+    define('CEYPAY_ANALYTICS_ENABLED', true);
+}
 
 class CeyPay_Analytics {
 

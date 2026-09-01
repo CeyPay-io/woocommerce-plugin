@@ -17,6 +17,14 @@
     --ceypay-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --ceypay-radius: 20px;
     --ceypay-testmode: #f59e0b;
+
+    /* Provider row metrics. The dialog is sized in whole rows rather than a
+       round number of pixels, so the list always cuts off mid-gap -- a row is
+       either fully visible or clearly clipped, never sliced in half. Keep these
+       in step with .ceypay-provider-btn and .ceypay-provider-list. */
+    --ceypay-row: 68px;
+    --ceypay-row-gap: 12px;
+    --ceypay-list-pad-top: 12px;
 }
 
 /* --- Test Mode Badge --- */
@@ -109,8 +117,22 @@
 .ceypay-modal__dialog {
     position: relative;
     width: 100%;
-    max-width: 380px;
-    height: 600px;
+    /* 420 rather than 380: the header is a 36px / 1fr / 36px grid with 16px
+       gaps and 24px padding, so a 380px dialog left the centre column only
+       228px -- not enough for a title plus the Sandbox badge on one line, so
+       the heading wrapped. 420px gives it 268px. */
+    max-width: 420px;
+    /* Height follows the content so the QR view can be shorter than the
+       provider list, and the provider list itself is capped to a whole number
+       of rows (see #ceypay-view-provider) rather than growing to fit all six.
+       A dialog tall enough for every provider stretched the header, list and
+       footer apart and lost the balance of the original fixed-height card.
+
+       min-height is clamped by the same viewport cap as max-height: on a
+       landscape phone 90dvh is ~350px, and an unclamped 480px floor would
+       otherwise win and push the dialog off both ends of the screen. */
+    height: auto;
+    min-height: min(480px, 90dvh);
     max-height: 90dvh;
     background: var(--ceypay-bg);
     border-radius: var(--ceypay-radius);
@@ -122,6 +144,17 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+/* Height morph between the provider list and the QR view.
+   The overshoot in the curve (y2 > 1) is what gives it the elastic, magnetic
+   settle rather than a linear stretch. Applied only while morphing, so it
+   never fights the open animation or a viewport resize -- morphDialogHeight()
+   in ceypay-checkout.js adds the class, sets an explicit height, then hands
+   control back to `auto`. */
+.ceypay-modal__dialog.is-morphing {
+    transition: height 0.52s cubic-bezier(0.34, 1.32, 0.44, 1);
+    will-change: height;
 }
 
 /* --- View Transition Animations (GPU Optimized) --- */
@@ -204,11 +237,20 @@
     #ceypay-view-qr {
         animation-duration: 0.15s !important;
     }
+
+    /* Belt and braces: morphDialogHeight() already skips the animation when
+       reduced motion is requested, but if it ever runs, do not animate. */
+    .ceypay-modal__dialog.is-morphing {
+        transition: none !important;
+    }
 }
 
 .ceypay-modal.is-visible .ceypay-modal__dialog {
     transform: translateY(0);
 }
+
+/* The mobile drawer lives at the end of this file, after every rule it has to
+   override. */
 
 .ceypay-modal__close {
     width: 36px;
@@ -323,6 +365,9 @@
     margin: 0;
     line-height: 1.2;
     text-align: center;
+    /* Keep the heading on one line. Provider titles ("Pay with Binance") sit
+       beside the Sandbox badge, and wrapping made the header two lines tall. */
+    white-space: nowrap;
 }
 
 /* Removed duplicate - see line 44 for the actual badge styles */
@@ -436,6 +481,8 @@
     font-weight: 400;
     line-height: 1.5;
     z-index: 100000;
+    /* Inert until shown, and inert again while fading out, so an invisible
+       tooltip can never swallow a click meant for what is underneath it. */
     pointer-events: none;
     opacity: 0;
     transform: translateY(4px);
@@ -450,6 +497,14 @@
     transform: translateY(0);
 }
 
+/* Only a tooltip you are meant to reach into takes the pointer -- currently
+   just the help tooltip, which carries a mailto link. The version tooltip on
+   the footer logo stays inert on purpose: it overlaps the Terms and Privacy
+   links, and capturing the pointer there would block clicks on them. */
+.ceypay-tooltip.is-interactive.is-visible {
+    pointer-events: auto;
+}
+
 .ceypay-tooltip a {
     color: var(--ceypay-primary);
     text-decoration: none;
@@ -460,18 +515,33 @@
     text-decoration: underline;
 }
 
-/* Arrow — single rotated square, flush with tooltip body */
+/* Arrow — single rotated square, flush with tooltip body.
+   Centred by default, but showTooltip() overrides --ceypay-tooltip-arrow with
+   the trigger's centre whenever it has had to shift the tooltip sideways to
+   keep it on screen. Without that the arrow keeps pointing at the middle of
+   the tooltip, which after a clamp is no longer where the button is. */
 .ceypay-tooltip::after {
     content: '';
     position: absolute;
     bottom: -5px;
-    left: 50%;
+    left: var(--ceypay-tooltip-arrow, 50%);
     transform: translateX(-50%) rotate(45deg);
     width: 8px;
     height: 8px;
     background: #ffffff;
     border-right: 1px solid #E2E8F0;
     border-bottom: 1px solid #E2E8F0;
+}
+
+/* Flipped below the trigger when there is no room above (landscape phones):
+   the arrow moves to the top edge and points the other way. */
+.ceypay-tooltip.is-below::after {
+    bottom: auto;
+    top: -5px;
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid #E2E8F0;
+    border-top: 1px solid #E2E8F0;
 }
 
 /* --- Provider List --- */
@@ -481,6 +551,11 @@
     flex-direction: column;
     overflow-y: auto;
     padding: 0 24px;
+    /* Always reserve the scrollbar track. Without this the bar appears and
+       disappears as the dialog height animates between views, changing the
+       content width by ~11px mid-transition and shifting every row sideways.
+       Browsers without support simply ignore it and behave as before. */
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
     mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
@@ -500,11 +575,36 @@
     border-radius: 2px;
 }
 
+/* Cap the provider list at five rows and let the sixth scroll.
+   Sizing the dialog to fit all six made it 685px tall, which on a laptop is
+   most of the window and reads as a page rather than a dialog. Five rows puts
+   the dialog back at ~600px -- the proportion the card was designed around --
+   and the body's fade mask leaves the sixth row half-visible at the bottom
+   edge, which is what tells you the list scrolls.
+
+   Applied to the provider view alone: the QR view is a single centred block
+   and must keep sizing itself, or the dialog would stay list-height when the
+   morph runs. */
+#ceypay-view-provider {
+    max-height: calc(5 * var(--ceypay-row) + 5 * var(--ceypay-row-gap) + var(--ceypay-list-pad-top));
+}
+
 /* QR view centering */
 #ceypay-view-qr {
     justify-content: center;
     align-items: center;
-    padding: 0;
+    /* Breathing room around the column. The QR code, the amount, the status
+       line and the buttons are spaced only by their own 8-12px margins, so
+       without this they sit flush against the header and the buttons. The
+       original fixed-height card hid that: it was always taller than this
+       view needed, and the centred flex body spread the leftover height out.
+       Now that the dialog sizes itself, the spacing has to be stated. */
+    padding: 24px 0 8px;
+    /* No fade here. The mask on .ceypay-modal__body is a scroll affordance for
+       the provider list -- on this view, which never scrolls, it just washes
+       out the top edge of the QR code and the bottom of the status line. */
+    mask-image: none;
+    -webkit-mask-image: none;
 }
 
 .ceypay-provider-list {
@@ -1014,6 +1114,78 @@
 
 .ceypay-footer-brand {
     cursor: default !important;
+}
+
+/* --- Mobile: bottom drawer ---
+   On a phone held upright a centred 420px card wastes the screen and puts the
+   action row out of the thumb's reach. Below this breakpoint the same dialog is
+   re-anchored to the bottom edge and slides up as a drawer, matching the
+   pattern used by other WooCommerce crypto gateways (DePay et al).
+
+   Portrait-only and 600px, so a landscape phone and a small desktop window --
+   both short but wide, where a full-width drawer would be worse than the card
+   -- keep the centred dialog. Nothing here changes the markup: the drawer is
+   the same dialog with different geometry, so every view, the height morph and
+   the close handlers carry over untouched.
+
+   Kept at the end of the file deliberately. These selectors are no more
+   specific than the desktop ones they override (#ceypay-view-provider against
+   #ceypay-view-provider), so source order is what decides -- declared any
+   earlier, the desktop row cap further down would win and the drawer would
+   quietly show five rows instead of four. */
+@media (orientation: portrait) and (max-width: 600px) {
+    .ceypay-modal {
+        align-items: flex-end;
+    }
+
+    .ceypay-modal__dialog {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        /* The bottom corners meet the screen edge, so only the top pair is
+           rounded. */
+        border-radius: var(--ceypay-radius) var(--ceypay-radius) 0 0;
+        /* A floor so a sparse state -- an error, a view still loading -- cannot
+           collapse the drawer into a sliver at the bottom of the screen. It is
+           below what either view actually needs, so in normal use the content
+           decides the height. (Spacing inside the QR view comes from that
+           view's own padding, not from slack left over here.) */
+        min-height: min(480px, 92dvh);
+        max-height: 92dvh;
+        /* Off-screen rather than the 20px nudge the centred card uses, so it
+           enters from the edge it is anchored to. */
+        transform: translateY(100%);
+    }
+
+    .ceypay-modal.is-visible .ceypay-modal__dialog {
+        transform: translateY(0);
+    }
+
+    /* Four rows rather than the five the desktop card shows. A drawer is
+       measured against the height of the phone, not the dialog: six rows came
+       to ~80% of the screen, which stops reading as a sheet over the checkout
+       and starts reading as a new page. Four leaves the page visible above it
+       and still scrolls to the rest. */
+    #ceypay-view-provider {
+        max-height: calc(4 * var(--ceypay-row) + 4 * var(--ceypay-row-gap) + var(--ceypay-list-pad-top));
+    }
+
+    /* Clear the home indicator on iOS, where the drawer runs to the very
+       bottom of the screen. */
+    .ceypay-modal__footer {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* A drawer travels the full height of itself on open, which is a lot of motion
+   for anyone who has asked for less of it. Fade it in place instead. Declared
+   after the drawer block so it wins; the reduced-motion rules further up cannot
+   reach these. */
+@media (orientation: portrait) and (max-width: 600px) and (prefers-reduced-motion: reduce) {
+    .ceypay-modal__dialog {
+        transform: none;
+        transition: none;
+    }
 }
 
 /* --- End of Styles --- */

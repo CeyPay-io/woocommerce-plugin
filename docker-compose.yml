@@ -1,4 +1,13 @@
-version: '3.8'
+# Local development environment.
+#
+# This runs the FULL plugin (the GitHub build, analytics module included) on a
+# real MySQL + PHP stack with persistent state. It is deliberately NOT the same
+# thing as the Playground suite in tests/, which boots the stripped
+# WordPress.org build on a disposable site. See tests/README.md.
+#
+#   docker compose up -d      # WooCommerce + the plugin are installed for you
+#   http://localhost:8000     # admin / admin
+#   http://localhost:5000     # mock CeyPay API dashboard
 
 services:
   db:
@@ -14,10 +23,16 @@ services:
       - "3307:3306" # Exposed on 3307 to avoid conflict with your existing MySQL
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   wordpress:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     image: wordpress:latest
     container_name: ceypay_wp
     restart: always
@@ -32,16 +47,24 @@ services:
       WORDPRESS_CONFIG_EXTRA: |
         define( 'WP_DEBUG_LOG', true );
         define( 'WP_DEBUG_DISPLAY', false );
+        /* Point the gateway at the local mock API (test mode only). */
+        define( 'CEYPAY_API_URL', 'http://mockapi:5000/' );
     volumes:
       - wp_data:/var/www/html
       - ./ceypay-payment-gateway:/var/www/html/wp-content/plugins/ceypay-payment-gateway
 
+  # One-shot bootstrap: installs WordPress and WooCommerce and activates the
+  # plugin, so `docker compose up` gives a usable store from an empty volume.
+  # Re-running is safe; every step is idempotent.
   wpcli:
     image: wordpress:cli
     container_name: ceypay_cli
     depends_on:
-      - db
-      - wordpress
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    user: "33:33" # www-data, so files written here stay readable by Apache
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
@@ -50,6 +73,49 @@ services:
     volumes:
       - wp_data:/var/www/html
       - ./ceypay-payment-gateway:/var/www/html/wp-content/plugins/ceypay-payment-gateway
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        set -e
+        echo "Waiting for WordPress files..."
+        until [ -f /var/www/html/wp-settings.php ]; do sleep 2; done
+
+        if ! wp core is-installed 2>/dev/null; then
+          echo "Installing WordPress..."
+          wp core install \
+            --url=http://localhost:8000 \
+            --title="CeyPay Dev" \
+            --admin_user=admin \
+            --admin_password=admin \
+            --admin_email=dev@example.com \
+            --skip-email
+        fi
+
+        wp plugin is-installed woocommerce 2>/dev/null || wp plugin install woocommerce
+        wp plugin activate woocommerce || true
+        wp plugin activate ceypay-payment-gateway || true
+
+        wp option update woocommerce_currency LKR
+        wp option update woocommerce_store_address "1 Test Street"
+        wp option update woocommerce_default_country "LK:LK-1"
+        wp option update woocommerce_onboarding_profile '{"completed":true,"skipped":true}' --format=json
+        wp option update woocommerce_task_list_hidden yes
+
+        echo "Done. http://localhost:8000/wp-admin  (admin / admin)"
+
+  # Mock CeyPay API. The plugin reaches it via the CEYPAY_API_URL constant set
+  # above; it only applies in test mode.
+  mockapi:
+    image: php:8.2-cli
+    container_name: ceypay_mockapi
+    restart: always
+    working_dir: /app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mock_server:/app
+    command: php -S 0.0.0.0:5000 -t /app /app/index.php
 
 volumes:
   db_data:

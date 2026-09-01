@@ -34,11 +34,21 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Deploying version: $VERSION"
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Build, compliance guard and integration tests all share the same
+      # scripts the local workflow uses, so the two can never drift.
+      - name: Run Playground Integration Tests
+        run: bash tests/run-playground-tests.sh
+
       - name: Prepare Plugin for WordPress.org
-        run: |
-          mkdir -p wporg-build
-          cp -r ${{ env.PLUGIN_SLUG }}/* wporg-build/
-          echo "Files prepared for WordPress.org"
+        run: bash ci/build-wporg.sh "${{ env.PLUGIN_SLUG }}" wporg-build
+
+      - name: Verify WordPress.org Build Is Clean
+        run: bash ci/verify-wporg-build.sh wporg-build
 
       - name: Install SVN
         run: sudo apt-get update && sudo apt-get install -y subversion

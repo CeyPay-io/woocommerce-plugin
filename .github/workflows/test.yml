@@ -1,0 +1,68 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PLUGIN_SLUG: ceypay-payment-gateway
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+
+      # 7.4 is the declared minimum (Requires PHP), so syntax must be valid
+      # there as well as on the version stores actually run.
+      - name: PHP syntax check (7.4 floor)
+        run: find ${{ env.PLUGIN_SLUG }} -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: JS syntax check
+        run: find ${{ env.PLUGIN_SLUG }}/assets/js -name '*.js' -print0 | xargs -0 -n1 node --check
+
+  wporg-build:
+    name: WordPress.org build compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build WordPress.org distribution
+        run: bash ci/build-wporg.sh "${{ env.PLUGIN_SLUG }}" wporg-build
+
+      - name: Verify compliance
+        run: bash ci/verify-wporg-build.sh wporg-build
+
+  playground:
+    name: Playground integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Boots the stripped build against real WordPress + WooCommerce. This is
+      # what catches fatals that only appear once WooCommerce's classes are
+      # loaded, such as a method narrowing a parent's visibility.
+      - name: Run Playground tests
+        run: bash tests/run-playground-tests.sh

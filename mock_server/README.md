@@ -25,12 +25,27 @@ This is a simple Python Flask server to mock the CeyPay API for testing the Word
     ```
 2.  The server will start on `http://localhost:5000`.
 
+## How to Run (Docker, recommended)
+
+`docker compose up -d` from the repository root starts this server as the
+`mockapi` service on port 5000 alongside WordPress, and points the plugin at it
+automatically. Nothing further to configure.
+
 ## Configuring the Plugin
-1.  Go to your WordPress Admin > WooCommerce > Settings > Payments > CeyPay.
-2.  Change the **API URL** to:
-    *   `http://host.docker.internal:5000` (If WordPress is running in Docker)
-    *   `http://localhost:5000` (If WordPress is running locally on XAMPP/WAMP)
-3.  Save changes.
+
+There is no "API URL" setting — the gateway derives its endpoint from test mode
+(`sandbox-api.ceypay.io` / `api.ceypay.io`). To point it here instead, define
+the override constant in `wp-config.php`:
+
+```php
+define( 'CEYPAY_API_URL', 'http://mockapi:5000/' );      // WordPress in Docker
+define( 'CEYPAY_API_URL', 'http://localhost:5000/' );    // WordPress on XAMPP/WAMP
+```
+
+The override is a constant rather than a setting or a filter, so payment traffic
+can only be redirected by someone with filesystem access. **It is ignored unless
+the gateway is in test mode**, so a live store cannot be misdirected. Enable test
+mode under WooCommerce > Settings > Payments > CeyPay.
 
 ## API Endpoints
 

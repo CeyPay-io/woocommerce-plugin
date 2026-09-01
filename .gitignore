@@ -1,5 +1,6 @@
 # Build artifacts
 build/
+.build-cache/
 *.zip
 
 # Virtual environments
