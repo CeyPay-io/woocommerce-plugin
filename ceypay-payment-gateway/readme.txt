@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, cryptocurrency, qr payment, checkout
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,10 @@ The payment modal displays the notice "By continuing, you agree to our Terms of 
 For a summary of how this plugin handles user data, please refer to the "External Services" section above.
 
 == Changelog ==
+
+= 2026-10-02 - v1.3.4 =
+* adds support for stores priced in USD, charged as USDT
+* CeyPay is hidden at checkout when the store currency is not LKR or USD, with an admin notice explaining why
 
 = 2026-8-24 - v1.3.3 =
 * documents the payment modal's Terms of Service and Privacy Policy notice under External Services

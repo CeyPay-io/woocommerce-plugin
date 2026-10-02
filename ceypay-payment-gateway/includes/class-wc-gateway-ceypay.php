@@ -29,6 +29,28 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
      */
     private $logger = null;
 
+    /**
+     * Store currencies the API accepts, mapped to the API currency code.
+     * USD is settled as USDT (1:1).
+     * @var array
+     */
+    const CURRENCY_MAP = array(
+        'LKR' => 'LKR',
+        'USD' => 'USDT',
+    );
+
+    /**
+     * Map a WooCommerce currency code to the API currency code.
+     *
+     * @param string $currency WooCommerce currency code.
+     * @return string|null API currency code, or null when unsupported.
+     */
+    public static function get_api_currency($currency)
+    {
+        $currency = strtoupper((string) $currency);
+        return isset(self::CURRENCY_MAP[$currency]) ? self::CURRENCY_MAP[$currency] : null;
+    }
+
     public function __construct()
     {
         $this->id                 = 'ceypay';
@@ -225,6 +247,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             return false;
         }
 
+        // Hide the gateway when the store currency can't be charged.
+        if (null === self::get_api_currency(get_woocommerce_currency())) {
+            return false;
+        }
+
         return $is_available;
     }
 
@@ -332,13 +359,19 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             wp_send_json_error(array('message' => 'Invalid provider'));
         }
 
+        $api_currency = self::get_api_currency($order->get_currency());
+        if (null === $api_currency) {
+            /* translators: %s: store currency code */
+            wp_send_json_error(array('message' => sprintf(__('CeyPay does not support payments in %s.', 'ceypay-payment-gateway'), $order->get_currency())));
+        }
+
         // Construct payload
         $payload = array(
             'merchantId'      => $this->merchant_id,
             'amount'          => (float) $order->get_total(),
             'goods'           => array(),
             'webhookUrl'      => WC()->api_request_url('WC_Gateway_CeyPay'),
-            'currency'        => $order->get_currency(),
+            'currency'        => $api_currency,
             'provider'        => $provider,
             'merchantTradeNo' => (string) $order->get_order_number(),
             'customerBilling' => array(
