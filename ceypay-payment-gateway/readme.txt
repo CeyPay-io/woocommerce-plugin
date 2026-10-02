@@ -95,6 +95,8 @@ For a summary of how this plugin handles user data, please refer to the "Externa
 = 2026-10-02 - v1.3.4 =
 * adds support for stores priced in USD, charged as USDT
 * CeyPay is hidden at checkout when the store currency is not LKR or USD, with an admin notice explaining why
+* fix: refreshing an expired QR code now issues a new one instead of returning the expired code
+* fix: payments no longer fail after a store's order numbers restart, such as after a database reset
 
 = 2026-8-24 - v1.3.3 =
 * documents the payment modal's Terms of Service and Privacy Policy notice under External Services
