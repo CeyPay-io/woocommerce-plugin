@@ -485,3 +485,35 @@ function ceypay_plugin_action_links( $links ) {
     return $links;
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'ceypay_plugin_action_links' );
+
+/**
+ * Add a CeyPay generator meta tag next to WordPress's own.
+ *
+ * Hooked to the generator filters rather than wp_head, so a site that removes
+ * the WordPress generator tag (wp_generator) drops this one too.
+ *
+ * @param string $gen  Generator tag markup.
+ * @param string $type Generator type.
+ * @return string
+ */
+function ceypay_generator_tag( $gen, $type ) {
+    $settings = get_option( 'woocommerce_ceypay_settings', array() );
+    if ( ! is_array( $settings ) || ! isset( $settings['enabled'] ) || 'yes' !== $settings['enabled'] ) {
+        return $gen;
+    }
+
+    $content = 'CeyPay Payment Gateway ' . CEYPAY_VERSION;
+
+    switch ( $type ) {
+        case 'html':
+            $gen .= "\n" . '<meta name="generator" content="' . esc_attr( $content ) . '">';
+            break;
+        case 'xhtml':
+            $gen .= "\n" . '<meta name="generator" content="' . esc_attr( $content ) . '" />';
+            break;
+    }
+
+    return $gen;
+}
+add_filter( 'get_the_generator_html', 'ceypay_generator_tag', 10, 2 );
+add_filter( 'get_the_generator_xhtml', 'ceypay_generator_tag', 10, 2 );
