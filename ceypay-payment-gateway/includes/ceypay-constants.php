@@ -15,5 +15,5 @@ if (! defined('ABSPATH')) exit;
 
 // Plugin Version
 if (! defined('CEYPAY_VERSION')) {
-    define('CEYPAY_VERSION', '1.3.3');
+    define('CEYPAY_VERSION', '1.3.4');
 }

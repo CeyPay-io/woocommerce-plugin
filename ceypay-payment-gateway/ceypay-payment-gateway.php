@@ -3,7 +3,7 @@
  * Plugin Name: CeyPay Payment Gateway
  * Plugin URI:  https://docs.ceypay.io/wordpress
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.3.3
+ * Version:     1.3.4
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
@@ -262,6 +262,110 @@ function ceypay_admin_notices() {
 add_action( 'admin_notices', 'ceypay_admin_notices' );
 
 /**
+ * Handle dismissal of the unsupported currency notice.
+ *
+ * Stores the dismissed currency code, so the notice comes back if the store
+ * switches to another unsupported currency.
+ */
+function ceypay_dismiss_currency_notice() {
+    if ( ! isset( $_GET['ceypay_dismiss_currency_notice'] ) ) {
+        return;
+    }
+
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    $nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+    if ( ! wp_verify_nonce( $nonce, 'ceypay_dismiss_currency_notice' ) ) {
+        return;
+    }
+
+    update_user_meta( get_current_user_id(), 'ceypay_currency_notice_dismissed', get_woocommerce_currency() );
+
+    wp_safe_redirect( remove_query_arg( array( 'ceypay_dismiss_currency_notice', '_wpnonce' ) ) );
+    exit;
+}
+add_action( 'admin_init', 'ceypay_dismiss_currency_notice' );
+
+/**
+ * Admin Notice for Unsupported Store Currency
+ *
+ * The gateway is hidden from checkout while the store currency is not one the
+ * API accepts, so tell the admin why it disappeared.
+ */
+function ceypay_currency_notice() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    if ( ! class_exists( 'WC_Gateway_CeyPay' ) || ! function_exists( 'get_woocommerce_currency' ) ) {
+        return;
+    }
+
+    $currency = get_woocommerce_currency();
+    if ( null !== WC_Gateway_CeyPay::get_api_currency( $currency ) ) {
+        return;
+    }
+
+    if ( get_user_meta( get_current_user_id(), 'ceypay_currency_notice_dismissed', true ) === $currency ) {
+        return;
+    }
+
+    $screen = get_current_screen();
+    $screens = array(
+        'dashboard',                    // where admins land on login
+        'plugins',                      // right after activating
+        'woocommerce_page_wc-admin',    // WooCommerce Home
+        'woocommerce_page_wc-settings', // WooCommerce Settings
+    );
+    if ( ! $screen || ! in_array( $screen->id, $screens, true ) ) {
+        return;
+    }
+
+    $settings = get_option( 'woocommerce_ceypay_settings', array() );
+    if ( ! is_array( $settings ) || ! isset( $settings['enabled'] ) || 'yes' !== $settings['enabled'] ) {
+        return;
+    }
+
+    $currency_settings_url = admin_url( 'admin.php?page=wc-settings&tab=general' );
+    $dismiss_url           = wp_nonce_url(
+        add_query_arg( 'ceypay_dismiss_currency_notice', '1' ),
+        'ceypay_dismiss_currency_notice'
+    );
+    ?>
+    <div class="notice notice-warning is-dismissible" style="border-left: 4px solid #1C6EF5; padding: 20px; margin-top: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center;">
+            <div style="margin-right: 20px;">
+                <img src="<?php echo esc_url( plugins_url( 'assets/images/ceypay-symbol.png', __FILE__ ) ); ?>" style="height: 60px; width: auto;" alt="CeyPay">
+            </div>
+            <div>
+                <h3 style="margin: 0 0 10px; color: #333; font-size: 18px;"><?php esc_html_e( 'CeyPay Is Hidden at Checkout', 'ceypay-payment-gateway' ); ?></h3>
+                <p style="margin: 0 0 15px; font-size: 14px; color: #555;">
+                    <?php
+                    echo wp_kses_post(
+                        sprintf(
+                            /* translators: %s: store currency code */
+                            __( 'Your store currency is <strong>%s</strong>. CeyPay only accepts payments in <strong>LKR</strong> or <strong>USD</strong>, so it is not shown to customers until you switch the store currency.', 'ceypay-payment-gateway' ),
+                            esc_html( $currency )
+                        )
+                    );
+                    ?>
+                </p>
+                <a href="<?php echo esc_url( $currency_settings_url ); ?>" class="button button-primary button-large" style="background-color: #1C6EF5; border-color: #1C6EF5;">
+                    <?php esc_html_e( 'Change Store Currency', 'ceypay-payment-gateway' ); ?>
+                </a>
+                <a href="<?php echo esc_url( $dismiss_url ); ?>" style="margin-left: 12px; font-size: 13px;">
+                    <?php esc_html_e( 'Dismiss', 'ceypay-payment-gateway' ); ?>
+                </a>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+add_action( 'admin_notices', 'ceypay_currency_notice' );
+
+/**
  * Admin Scripts to modify Gateway Badge
  */
 function ceypay_admin_scripts() {
@@ -381,3 +485,35 @@ function ceypay_plugin_action_links( $links ) {
     return $links;
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'ceypay_plugin_action_links' );
+
+/**
+ * Add a CeyPay generator meta tag next to WordPress's own.
+ *
+ * Hooked to the generator filters rather than wp_head, so a site that removes
+ * the WordPress generator tag (wp_generator) drops this one too.
+ *
+ * @param string $gen  Generator tag markup.
+ * @param string $type Generator type.
+ * @return string
+ */
+function ceypay_generator_tag( $gen, $type ) {
+    $settings = get_option( 'woocommerce_ceypay_settings', array() );
+    if ( ! is_array( $settings ) || ! isset( $settings['enabled'] ) || 'yes' !== $settings['enabled'] ) {
+        return $gen;
+    }
+
+    $content = 'CeyPay Payment Gateway ' . CEYPAY_VERSION;
+
+    switch ( $type ) {
+        case 'html':
+            $gen .= "\n" . '<meta name="generator" content="' . esc_attr( $content ) . '">';
+            break;
+        case 'xhtml':
+            $gen .= "\n" . '<meta name="generator" content="' . esc_attr( $content ) . '" />';
+            break;
+    }
+
+    return $gen;
+}
+add_filter( 'get_the_generator_html', 'ceypay_generator_tag', 10, 2 );
+add_filter( 'get_the_generator_xhtml', 'ceypay_generator_tag', 10, 2 );

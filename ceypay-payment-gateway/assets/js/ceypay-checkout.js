@@ -802,7 +802,7 @@ jQuery(document).ready(function($) {
         if (data.fee_breakdown && data.fee_breakdown.netAmountUSDT && data.currency_amount) {
              var usdtAmount = parseFloat(parseFloat(data.fee_breakdown.netAmountUSDT).toFixed(8));
              var formattedCurrencyAmount = formatNumberWithCommas(parseFloat(data.currency_amount).toFixed(2));
-             var currencySymbol = data.currency_code === 'LKR' ? 'රු.' : data.currency_code;
+             var currencySymbol = data.currency_code === 'LKR' ? 'රු.' : (data.currency_code === 'USD' ? '$' : data.currency_code);
              priceHtml = '<span style="font-weight:500">' + t('pay_label', 'Pay') + '</span> <span class="ceypay-amount-highlight">' + formatNumberWithCommas(usdtAmount) + ' USDT</span> <span class="ceypay-amount-secondary">(' + currencySymbol + ' ' + formattedCurrencyAmount + ')</span>';
         } else if (data.amount && data.currency_amount) {
              var formattedCurrencyAmount = formatNumberWithCommas(parseFloat(data.currency_amount).toFixed(2));

@@ -29,6 +29,62 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
      */
     private $logger = null;
 
+    /**
+     * Store currencies the API accepts, mapped to the API currency code.
+     * USD is settled as USDT (1:1).
+     * @var array
+     */
+    const CURRENCY_MAP = array(
+        'LKR' => 'LKR',
+        'USD' => 'USDT',
+    );
+
+    /**
+     * Map a WooCommerce currency code to the API currency code.
+     *
+     * @param string $currency WooCommerce currency code.
+     * @return string|null API currency code, or null when unsupported.
+     */
+    public static function get_api_currency($currency)
+    {
+        $currency = strtoupper((string) $currency);
+        return isset(self::CURRENCY_MAP[$currency]) ? self::CURRENCY_MAP[$currency] : null;
+    }
+
+    /**
+     * Get the merchantTradeNo for this order's next payment request.
+     *
+     * The API returns its cached payment (and QR) for a merchantTradeNo it has
+     * already seen. The plain order number is not unique enough for that: a
+     * store whose database was reset reissues order numbers, and an expired
+     * QR would be returned again on refresh. So the order number gets a suffix
+     * of the current time plus random characters, kept on the order and reused
+     * until its QR expires.
+     *
+     * Sets the number on the order without saving it; the caller saves it
+     * once the API accepts the payment.
+     *
+     * @param WC_Order $order           Order being paid.
+     * @param string   $previous_status Last CeyPay status recorded on the order.
+     * @return string Letters and digits only, at most 31 characters.
+     */
+    private function get_merchant_trade_no($order, $previous_status)
+    {
+        $trade_no = (string) $order->get_meta('_ceypay_merchant_trade_no');
+        if ('' !== $trade_no && 'EXPIRED' !== $previous_status) {
+            return $trade_no;
+        }
+
+        $prefix = substr(preg_replace('/[^A-Za-z0-9]/', '', (string) $order->get_order_number()), 0, 20);
+        $time   = strtoupper(base_convert((string) time(), 10, 36));
+        $random = strtoupper(wp_generate_password(4, false));
+
+        $trade_no = $prefix . 'T' . $time . $random;
+        $order->update_meta_data('_ceypay_merchant_trade_no', $trade_no);
+
+        return $trade_no;
+    }
+
     public function __construct()
     {
         $this->id                 = 'ceypay';
@@ -225,6 +281,11 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             return false;
         }
 
+        // Hide the gateway when the store currency can't be charged.
+        if (null === self::get_api_currency(get_woocommerce_currency())) {
+            return false;
+        }
+
         return $is_available;
     }
 
@@ -322,6 +383,9 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         }
         // ceypay:analytics-end
 
+        // Read before clearing: an expired QR needs a new merchantTradeNo.
+        $previous_status = (string) $order->get_meta('_ceypay_payment_status');
+
         // Clear any previous payment status (e.g., EXPIRED) when generating new QR
         $order->delete_meta_data('_ceypay_payment_status');
         $order->save();
@@ -332,15 +396,21 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
             wp_send_json_error(array('message' => 'Invalid provider'));
         }
 
+        $api_currency = self::get_api_currency($order->get_currency());
+        if (null === $api_currency) {
+            /* translators: %s: store currency code */
+            wp_send_json_error(array('message' => sprintf(__('CeyPay does not support payments in %s.', 'ceypay-payment-gateway'), $order->get_currency())));
+        }
+
         // Construct payload
         $payload = array(
             'merchantId'      => $this->merchant_id,
             'amount'          => (float) $order->get_total(),
             'goods'           => array(),
             'webhookUrl'      => WC()->api_request_url('WC_Gateway_CeyPay'),
-            'currency'        => $order->get_currency(),
+            'currency'        => $api_currency,
             'provider'        => $provider,
-            'merchantTradeNo' => (string) $order->get_order_number(),
+            'merchantTradeNo' => $this->get_merchant_trade_no($order, $previous_status),
             'customerBilling' => array(
                 'firstName'  => $order->get_billing_first_name(),
                 'lastName'   => $order->get_billing_last_name(),
@@ -638,6 +708,13 @@ class WC_Gateway_CeyPay extends WC_Payment_Gateway
         // its own keys, which must not be mistaken for a payment status.
         if (200 === $response_code && isset($body['status'])) {
             $status = $body['status'];
+
+            // Record expiry even if the webhook has not arrived, so the next
+            // QR request uses a new merchantTradeNo.
+            if ('EXPIRED' === $status && 'EXPIRED' !== $order->get_meta('_ceypay_payment_status')) {
+                $order->update_meta_data('_ceypay_payment_status', 'EXPIRED');
+                $order->save();
+            }
         } else {
             $this->log("Status check failed for transaction $transaction_id: HTTP $response_code");
             $status = 'PENDING';
