@@ -3,7 +3,7 @@
  * Plugin Name: CeyPay Payment Gateway
  * Plugin URI:  https://docs.ceypay.io/wordpress
  * Description: WooCommerce payment gateway for CeyPay IPG.
- * Version:     1.3.0
+ * Version:     1.3.1
  * Author:      CeyPay
  * Author URI:  https://ceypay.io/
  * Text Domain: ceypay-payment-gateway
@@ -133,7 +133,7 @@ function ceypay_admin_notices() {
                 <div>
                     <h3 style="margin: 0 0 10px; color: #333; font-size: 18px;"><?php esc_html_e( 'Action Needed: Complete CeyPay Setup', 'ceypay-payment-gateway' ); ?></h3>
                     <p style="margin: 0 0 15px; font-size: 14px; color: #555;">
-                        <?php echo wp_kses_post( __( 'Your CeyPay payment gateway is almost ready! To start accepting crypto payments, you must configure your <strong>Merchant ID</strong>.', 'ceypay-payment-gateway' ) ); ?>
+                        <?php echo wp_kses_post( __( 'Your CeyPay payment gateway is almost ready! To start accepting crypto payments, you must configure your <strong>Merchant ID</strong>.', 'ceypay-payment-gateway' ); ?>
                     </p>
                     <a href="<?php echo esc_url( $settings_url ); ?>" class="button button-primary button-large" style="background-color: #1C6EF5; border-color: #1C6EF5;">
                         <?php esc_html_e( 'Complete Setup Now', 'ceypay-payment-gateway' ); ?>
